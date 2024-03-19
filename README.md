@@ -28,6 +28,15 @@ Some require additional libraries.
 python record.py -h
 python record.py --host 192.168.0.1 --frequency 10
 ```
+
+# Connect robot to computer/network
+1. Connect the ethernet cable from the robot control box to your computer/router
+2. Get the IP adress from your ethernet connection (i.e. the robot in this case) using the terminal   
+`$ ifconfig` (Linux) or `$ ipconfig` (Windows)
+3. In the top right corner in PolyScope select `Burger button>Settings>System>Network>select static address`. Set the **IP adress** and **subnet mask** (the rest can be kept at **0.0.0.0**). Check it the green tick turns on to 'Network is connectet'
+4. test if you can contact the robot from your computer with:   
+`$ ping <ip>`
+
 # Using robot simulator in Docker
 RTDE can connect from host system to controller running in Docker
 when RTDE port 30004 is forwarded.
