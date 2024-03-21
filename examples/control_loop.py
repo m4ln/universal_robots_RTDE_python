@@ -29,13 +29,10 @@ import logging
 
 import rtde.rtde as rtde
 import rtde.rtde_config as rtde_config
-
+from config import ROBOT_HOST, ROBOT_PORT
 
 # logging.basicConfig(level=logging.INFO)
 
-# Define the robot's host IP and port
-ROBOT_HOST = "169.254.106.113"
-ROBOT_PORT = 30004
 # Define the configuration file name
 config_filename = "control_loop_configuration.xml"
 
@@ -122,7 +119,7 @@ while keep_running:
         watchdog.input_int_register_0 = 1
     # If a move is in progress and the robot is not ready for a new one
     elif not move_completed and state.output_int_register_0 == 0:
-        print("Move to confirmed pose = " + str(state.target_q))
+        print("Move to confirmed pose (joint) = " + str(state.target_q))
         move_completed = True
         # reset watchdog
         watchdog.input_int_register_0 = 0
