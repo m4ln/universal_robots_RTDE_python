@@ -10,14 +10,28 @@ EPSILON = 0.001
 # enter the configuration of the tcp points you want to use
 tcp_pos_config = [0,1]
 
+####
 # TCP positions (x,y,z,rx,ry,rz in base view) between which the robot moves
-tcp_pos_0 = [-0.119, -0.528, 0.388, 0.03, -2.8, 1.5]
-tcp_pos_1 = [-0.119, -0.528, 0.388, 0.13, -2.8, 1.5]
+# be careful that unit is in meters and radians (on the panel it is mm and radians)
+####
+# playing the string with the bridge
+# the bow starts from behind and moves a little downwards while going a bit up (-4mm in z direction)
+tcp_pos_0 = [-0.15, -0.160, 0.152, 2.147, 2.387, 0.076]
+tcp_pos_1 = [-0.15, -0.400, 0.148, 2.147, 2.387, 0.076]
+
+# tcp_pos_0 = [-0.15, -0.251, 0.130, 2.147, 2.387, 0.076]
+# tcp_pos_1 = [-0.15, -0.166, 0.130, 2.147, 2.387, 0.076]
+
+# tcp_pos_0 = [-0.119, -0.528, 0.388, 0.03, -2.8, 1.5]
+# tcp_pos_1 = [-0.119, -0.528, 0.388, 0.13, -2.8, 1.5]
+
+tcp_pos_2 = [-0.104, -0.485, 0.213, 0.223, 3.136, -0.024]
+# tcp_pos_1 = [-0.104, -0.485, 0.213, 0.4, 3.136, -0.024]
 
 # daniel
-tcp_pos_0 = [-0.12, -0.51, 0.21, 0, 3.11, 0.04]
-tcp_pos_1 = [-0.12, -0.51, 0.21, 0.2, 3.11, 0.04]
-tcp_pos_2 = [-0.12, -0.51, 0.21, 0, 3.11, 0.14]
+# tcp_pos_0 = [-0.12, -0.51, 0.21, 0, 3.11, 0.04]
+# tcp_pos_1 = [-0.12, -0.51, 0.21, 0.6, 3.11, 0.04]
+# tcp_pos_2 = [-0.12, -0.51, 0.21, 0, 3.11, 0.14]
 
 # tcp_pos_0 = [-0.084, -0.252, 0.121, 2.249, 2.117, 0.131]
 # tcp_pos_1 = tcp_pos_0.copy()
