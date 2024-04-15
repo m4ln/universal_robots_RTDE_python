@@ -1,4 +1,5 @@
 .idea
+Pipfile.lock
 .vscode
 dist
 build
