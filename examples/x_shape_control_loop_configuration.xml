@@ -1,8 +1,7 @@
 <?xml version="1.0"?>
 <rtde_config>
 	<recipe key="state">
-		<field name="target_TCP_pose" type="VECTOR6D"/>
-		<field name="target_qd" type="VECTOR6D"/>
+		<field name="actual_TCP_pose" type="VECTOR6D"/>
 		<field name="output_int_register_0" type="INT32"/>
 	</recipe>
 

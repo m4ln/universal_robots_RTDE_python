@@ -120,7 +120,7 @@ while keep_running:
         watchdog.input_int_register_0 = 1
     # If a move is in progress and the robot is not ready for a new one
     elif not move_completed and state.output_int_register_0 == 0:
-        print("Move to confirmed pose (TCP) = " + str(state.target_TCP_pose))
+        print("Moved to confirmed pose (TCP) = " + str(state.actual_TCP_pose))
         move_completed = True
         # reset watchdog
         watchdog.input_int_register_0 = 0
