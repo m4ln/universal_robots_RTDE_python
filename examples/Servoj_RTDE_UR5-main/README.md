@@ -1,5 +1,3 @@
-This code is copied from https://github.com/danielstankw/Servoj_RTDE_UR5.git
-
 ## Servoj_RTDE_UR5
 Implementation of servoj() using RTDE in python
 
