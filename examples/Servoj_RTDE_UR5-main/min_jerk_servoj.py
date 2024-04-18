@@ -2,7 +2,6 @@
 Code written based on servoj example from: https://github.com/davizinho5/RTDE_control_example
 """
 import sys
-
 sys.path.append('')
 import logging
 import rtde.rtde as rtde
@@ -11,7 +10,7 @@ import rtde.rtde_config as rtde_config
 import time
 from matplotlib import pyplot as plt
 from min_jerk_planner_translation import PathPlanTranslation
-from config import ROBOT_HOST, ROBOT_PORT, tcp_pos_1, tcp_pos_2
+from config import ROBOT_HOST, ROBOT_PORT, tcp_pos_servoj_0, tcp_pos_servoj_1
 
 # -------- functions -------------
 def setp_to_list(setp):
@@ -28,16 +27,16 @@ def list_to_setp(setp, list):
 
 
 # ------------- robot communication stuff -----------------
+# ROBOT_HOST = '192.168.1.103'
+# ROBOT_PORT = 30004
 config_filename = 'control_loop_configuration.xml'  # specify xml file for data synchronization
 
 logging.getLogger().setLevel(logging.INFO)
 
 conf = rtde_config.ConfigFile(config_filename)
-state_names, state_types = conf.get_recipe(
-    'state')  # Define recipe for access to robot output ex. joints,tcp etc.
-setp_names, setp_types = conf.get_recipe(
-    'setp')  # Define recipe for access to robot input
-watchdog_names, watchdog_types = conf.get_recipe('watchdog')
+state_names, state_types = conf.get_recipe('state')  # Define recipe for access to robot output ex. joints,tcp etc.
+setp_names, setp_types = conf.get_recipe('setp')  # Define recipe for access to robot input
+watchdog_names, watchdog_types= conf.get_recipe('watchdog')
 
 # -------------------- Establish connection--------------------
 con = rtde.RTDE(ROBOT_HOST, ROBOT_PORT)
@@ -55,8 +54,7 @@ con.get_controller_version()
 # ------------------- setup recipes ----------------------------
 FREQUENCY = 500  # send data in 500 Hz instead of default 125Hz
 con.send_output_setup(state_names, state_types, FREQUENCY)
-setp = con.send_input_setup(setp_names,
-                            setp_types)  # Configure an input package that the external application will send to the robot controller
+setp = con.send_input_setup(setp_names, setp_types)  # Configure an input package that the external application will send to the robot controller
 watchdog = con.send_input_setup(watchdog_names, watchdog_types)
 
 setp.input_double_register_0 = 0
@@ -74,14 +72,11 @@ watchdog.input_int_register_0 = 0
 if not con.send_start():
     sys.exit()
 
-# start_pose = [-0.18507570121045797, -0.43755157063468963, 0.21101969081827837,
-#               -0.06998478570599498, -3.0949971695297402, 0.10056260631290592]
-# desired_pose = [-0.41227681851594755, -0.553539320093064, 0.07077025734923525,
-#                 -0.06990025901302169, -3.0949715741835195, 0.10065200008528846]
+# start_pose = [-0.18507570121045797, -0.43755157063468963, 0.21101969081827837, -0.06998478570599498, -3.0949971695297402, 0.10056260631290592]
+# desired_pose = [-0.41227681851594755, -0.553539320093064, 0.07077025734923525, -0.06990025901302169, -3.0949715741835195, 0.10065200008528846]
 
-start_pose = tcp_pos_1
-desired_pose = tcp_pos_2
-
+start_pose = tcp_pos_servoj_0
+desired_pose = tcp_pos_servoj_1
 
 orientation_const = start_pose[3:]
 
@@ -101,10 +96,11 @@ while True:
 
 print("-------Executing moveJ -----------\n")
 
+
 watchdog.input_int_register_0 = 1
 con.send(watchdog)  # sending mode == 1
 list_to_setp(setp, start_pose)  # changing initial pose to setp
-con.send(setp)  # sending initial pose
+con.send(setp) # sending initial pose
 
 while True:
     print('Waiting for movej() to finish')
@@ -114,12 +110,13 @@ while True:
         print('Proceeding to mode 2\n')
         break
 
+
 print("-------Executing servoJ  -----------\n")
 watchdog.input_int_register_0 = 2
 con.send(watchdog)  # sending mode == 2
 
 trajectory_time = 8  # time of min_jerk trajectory
-dt = 1 / 500  # 500 Hz    # frequency
+dt = 1/500  # 500 Hz    # frequency
 plotter = True
 
 # ------------------ Control loop initialization -------------------------
@@ -159,13 +156,12 @@ while time.time() - t_start < trajectory_time:
     t_prev = t_current
     t_current = time.time() - t_start
 
-    print(f"dt:{t_current - t_prev}")
+    print(f"dt:{t_current-t_prev}")
     # read state from the robot
     if state.runtime_state > 1:
         #   ----------- minimum_jerk trajectory --------------
         if t_current <= trajectory_time:
-            [position_ref, lin_vel_ref,
-             acceleration_ref] = planner.trajectory_planning(t_current)
+            [position_ref, lin_vel_ref, acceleration_ref] = planner.trajectory_planning(t_current)
 
         # ------------------ impedance -----------------------
         current_pose = state.actual_TCP_pose
@@ -195,7 +191,7 @@ while time.time() - t_start < trajectory_time:
             vy.append(current_speed[1])
             vz.append(current_speed[2])
 
-print(f"It took {time.time() - t_start}s to execute the servoJ")
+print(f"It took {time.time()-t_start}s to execute the servoJ")
 print(f"time needed for min_jerk {trajectory_time}\n")
 
 state = con.receive()
@@ -206,8 +202,10 @@ print(state.actual_TCP_pose)
 watchdog.input_int_register_0 = 3
 con.send(watchdog)
 
+
 con.send_pause()
 con.disconnect()
+
 
 if plotter:
     # ----------- position -------------
