@@ -1,0 +1,16 @@
+
+*.idea
+.idea/*
+.idea/workspace.xml
+dir_to_ignore/ur_log
+dir_to_ignore/.idea
+dir_to_ignore/idea
+idea/*
+ur_log/*
+URBasic/_pycache/*
+adf.py
+*.pyc
+Archive/*
+.DS_Store
+.DS_Store
+.vscode/settings.json
