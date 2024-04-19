@@ -19,8 +19,72 @@ import time
 import imutils
 from imutils.video import VideoStream
 import math3d as m3d
+from pythonosc import dispatcher
+from pythonosc import osc_server
+from pythonosc import udp_client
+from typing import List, Any
+import _thread
+import threading
 
 from config import ROBOT_HOST, tcp_pos_servoj_0, tcp_pos_servoj_1
+
+osc_ip = "127.0.0.1"
+osc_port = 12345
+
+timestamp = 0
+min_interval = 0.02
+debug = True
+
+def print_osc(address: str, *osc_arguments: List[Any]) -> None:
+    print(f"{address}: {osc_arguments}")
+
+# moves with predefined y/p/y values when receiving only 3 arguments
+def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
+    global timestamp, min_interval, speed, acceleration, cnt, setp, debug, robot
+
+    # con.send_start()
+    # state = con.receive()
+    # if state is None:
+    #     return
+
+    if osc_arguments[2] != 50.0:
+        return
+
+    current_time = time.time()
+    # tcp_pose = state.actual_TCP_pose
+    target_x = (osc_arguments[0] - 500) * 0.001
+    target_y = (osc_arguments[1] - 400) / 1000
+    target_z = (osc_arguments[2] + 140) / 1000
+
+    if len(osc_arguments) == 6:
+        target_roll = osc_arguments[3]
+        target_pitch = osc_arguments[4]
+        target_yaw = osc_arguments[5]
+    else:
+        target_roll = 3.14
+        target_pitch = 0
+        target_yaw = 0.04
+
+    # if (current_time - timestamp) > min_interval:
+        # print('current time - timestamp = ' + str(current_time - timestamp))
+        # print('min_interval = ' + str(min_interval))
+
+    if debug:
+        print(osc_arguments)
+
+    new_setp = [target_x, target_y, target_z, target_roll, target_pitch,
+                target_yaw]
+
+    print("New pose = " + str(new_setp))
+
+    robot.set_realtime_pose(new_setp)
+
+    timestamp = current_time
+
+    # elif debug:
+        # print("message overflow, discarding request")
+        # print("lower min_interval if you want to send with shorter intervals")
+
 
 """SETTINGS AND VARIABLES ________________________________________________________________"""
 
@@ -248,27 +312,21 @@ robot.init_realtime_control()  # starts the realtime control loop on the Univers
 time.sleep(1) # just a short wait to make sure everything is initialised
 
 cnt= 0
+
 try:
-    print("starting loop")
-    while True:
-        pos = robot.get_actual_tcp_pose()
-        print("current position", pos)
-        # only slightly change x,y position and keep rest the same
-        next_pose = pos.copy()
-        next_pose[0] = next_pose[0] + random.uniform(0, 0.01)
-        next_pose[1] = next_pose[1] + random.uniform(0, 0.01)
-        robot.set_realtime_pose(next_pose)
-        print("pose set" + str(next_pose))
-        # robot_position = move_to_face(robot_position)
-        # print("moved to new position", robot_position)
-        # next_pose = tcp_pos_servoj_0
-        # small_rand = random.uniform(0, 0.01)
-        # print(small_rand)
-        # print(next_pose[3])
-        # print(next_pose[3] + small_rand)
-        # next_pose[3] = small_rand
-        # robot.set_realtime_pose(next_pose)
-        # print("pose set" + str(next_pose))
+    dispatcher = dispatcher.Dispatcher()
+    dispatcher.map("/position", move_cartesian)
+    # dispatcher.map("/position", print_osc)
+
+
+    server = osc_server.ThreadingOSCUDPServer(
+              (osc_ip, osc_port), dispatcher)
+    print("Serving on {}".format(server.server_address))
+    # Create a new thread for the OSC server
+    server_thread = threading.Thread(target=server.serve_forever)
+
+    # Start the thread
+    server_thread.start()
 
 except KeyboardInterrupt:
     print("closing robot connection")
