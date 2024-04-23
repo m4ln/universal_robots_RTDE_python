@@ -1,5 +1,6 @@
 """
-Face_tracking01
+real time control using osc data (copy and modify from Face_tracking01.py)
+
 Python program for realtime face tracking of a Universal Robot (tested with UR5cb)
 Demonstration Video: https://youtu.be/HHb-5dZoPFQ
 Explanation Video: https://www.youtube.com/watch?v=9XCNE0BmtUg
@@ -19,10 +20,8 @@ from pythonosc import osc_server
 from typing import List, Any
 import threading
 
-from config import ROBOT_HOST, tcp_pos_servoj_0, tcp_pos_servoj_1
-
-osc_ip = "127.0.0.1"
-osc_port = 12345
+from config_ur import ROBOT_HOST, tcp_pos_servoj_0, tcp_pos_servoj_1
+from config_osc import OSC_HOST, OSC_PORT
 
 timestamp = 0
 min_interval = 0.02
@@ -313,7 +312,7 @@ try:
 
 
     server = osc_server.ThreadingOSCUDPServer(
-              (osc_ip, osc_port), dispatcher)
+              (OSC_HOST, OSC_PORT), dispatcher)
     print("Serving on {}".format(server.server_address))
     # Create a new thread for the OSC server
     server_thread = threading.Thread(target=server.serve_forever)

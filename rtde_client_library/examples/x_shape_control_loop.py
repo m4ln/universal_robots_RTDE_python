@@ -29,7 +29,7 @@ import logging
 
 import rtde_client_library.rtde.rtde as rtde
 import rtde_client_library.rtde.rtde_config as rtde_config
-from config import ROBOT_HOST, ROBOT_PORT, tcp_pos_1, tcp_pos_2, tcp_pos_3, tcp_pos_4
+from config_ur import ROBOT_HOST, ROBOT_PORT, tcp_pos_1, tcp_pos_2, tcp_pos_3, tcp_pos_4
 
 # logging.basicConfig(level=logging.INFO)
 

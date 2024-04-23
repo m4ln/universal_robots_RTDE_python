@@ -1,100 +1,49 @@
-# RTDE client library - Python
-Library implements API for Universal Robots RTDE realtime interface.
+# Universal Robots
 
-Full RTDE description is available on [Universal Robots support site](https://www.universal-robots.com/support/)
-# Project structure
-## rtde
-RTDE core library
+This documentation refers to the UR model UR3e, Polyscope v. 5.12
+- manual: https://myurhelpresources.blob.core.windows.net/resources/PDF/SW_5_12/e-Series_SW_en_Global.pdf
+- help forum: https://forum.universal-robots.com/
 
-- rtde.py:
-RTDE connection management object
+## Real Time Data Exchange (RTDE)
+### Useful Links
+- https://www.universal-robots.com/articles/ur/interface-communication/real-time-data-exchange-rtde-guide/
+- link to pdf: https://s3-eu-west-1.amazonaws.com/ur-support-site/22229/Real_Time_Data_Exchange_(RTDE)_Guide.pdf
+- video tutorial (series): https://www.youtube.com/playlist?list=PLnJ9fSRnDN3B1wEuxQY4thTWyGoT2N0yd
+- Overview of Client Interfaces: https://www.universal-robots.com/articles/ur/interface-communication/overview-of-client-interfaces/
+- Remote Control via TCP/IP: https://www.universal-robots.com/articles/ur/interface-communication/remote-control-via-tcpip/
 
-- rtde_config.py:
-XML configuration files parser
+### Client
+- Download the client from github: https://github.com/UniversalRobots/RTDE_Python_Client_Library 
+- input/output bits: https://s3-eu-west-1.amazonaws.com/ur-support-site/22229/IMMI_Euromap67_input_output_bits.pdf 
 
-- csv_writer.py, csv_reader.py: 
-read and write rtde data objects to text csv files
+### Getting Started (Running the examples)
+This explains how to run the examples inside the `RTDE_Python_Client_Library/examples`   
 
-## examples
-- record.py - example of recording realtime data from selected channels.
-- example_control_loop.py - example for controlling robot motion. Program moves robot between 2 setpoints.
-Copy rtde_control_loop.urp to the robot. Start python script before starting program.
-- example_plotting.py - example for using csv_reader, and plotting selected data.
-
-### Running examples
-It's recommended to run examples in [virtual environment](https://docs.python.org/3/library/venv.html).
-Some require additional libraries.
-```
-python record.py -h
-python record.py --host 192.168.0.1 --frequency 10
-```
-
-# Connect robot to computer/network
-1. Connect the ethernet cable from the robot control box to your computer/router
+#### Connect robot/controller to external computer
+1. Connect the ethernet cable from the robot control box to your computer
 2. Get the IP adress from your ethernet connection (i.e. the robot in this case) using the terminal   
-`$ ifconfig` (Linux) or `$ ipconfig` (Windows)
+`$ ifconfig` (Linux)   
+`$ ipconfig` (Win)
 3. In the top right corner in PolyScope select `Burger button>Settings>System>Network>select static address`. Set the **IP adress** and **subnet mask** (the rest can be kept at **0.0.0.0**). Check it the green tick turns on to 'Network is connectet'
 4. test if you can contact the robot from your computer with:   
 `$ ping <ip>`
 
-# Using robot simulator in Docker
-RTDE can connect from host system to controller running in Docker
-when RTDE port 30004 is forwarded.
-1. Get latest ursim docker image: docker pull universalrobots/ursim_e-series
-2. Run docker container: docker run --rm -dit -p 30004:30004 -p 5900:5900 -p 6080:6080 universalrobots/ursim_e-series
-3. open vnc client in browser, and confirm safet: http://localhost:6080/vnc.html?host=docker_ip&port=6080
+#### Load Script into PolyScope
+If you have a file `.urp` you load it onto a usb stick and load it into PolyScope via `Run>Load Programm`. Press the `Play` button in the right bottom corner to run the program.
 
-More information about ursim docker image is available on [Dockerhub](https://hub.docker.com/r/universalrobots/ursim_e-series)
+#### Python 
+ROBOT_HOST = '\<IP number from above\>'   
+Port = 30004   
+config_filename = '\<config_file\>.xml'
 
-# Using robot simulator in VirtualBox
-RTDE can connect from host system to controller running in VirtualBox
-when RTDE port 30004 is forwarded.
-1. Download simulator from [Universal Robots support site](https://www.universal-robots.com/support/)
-2. Run simulator in VirtualBox
-3. Open menu Devices->Network Settings
-4. Open Advanced settings for NAT
-5. Open Port Forwarding
-6. Add new rule, setting host, and guest ports to 30004. 
-Leave host, and guest IP fields blank.
+#### Possible bugfixes
+- Turn off Wifi and other network connections
+- In the PolyScope enable Remote Control, check that
+- **[Python] Input parameters already in use**: In PolyScope, go to `Installation>Fieldbus>EtherNet/IP>Disable` 
 
-# Using rtde library
-Copy rtde folder python project
-Library is compatible with Python 2.7+, and Python 3.6+
+### Change Output Frequency
+In the file `rtde/rtde.py` the function `send_output_setup(frequency=125)` the value can be changed to `frequency=500` to increase the output frequency
 
-# Build release package
-```
-mvn package
-```
-## Using with virtual environment
-Create virtual environment, and install wheel package
+### Run example 
 
-### Linux & MacOS
-```
-python -m venv venv
-source venv/bin/activate
-pip install wheel
-```
-Install rtde package
-```
-pip install target/rtde-<version>-release.zip
-```
-
-### Windows PowerShell
-If Python3 is not installed, then just run python3 from powershell. Microsoft store will launch the installation.
-
-Permission to run scripts in console is needed to activate virtual envrionment.
-```
-set-executionpolicy -Scope CurrentUser -ExecutionPolicy Unrestricted
-python -m venv venv
-venv/Scripts/Activate.ps1
-pip install wheel
-```
-Install rtde package
-```
-pip install target/rtde-<version>-release.zip
-```
-
-# Contributor guidelines
-Code is formatted with [black](https://github.com/psf/black).
-Run code formatter before submitting pull request.
 

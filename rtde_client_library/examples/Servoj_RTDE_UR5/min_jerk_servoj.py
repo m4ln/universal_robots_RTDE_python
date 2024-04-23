@@ -10,7 +10,7 @@ import rtde_client_library.rtde.rtde_config as rtde_config
 import time
 from matplotlib import pyplot as plt
 from min_jerk_planner_translation import PathPlanTranslation
-from config import ROBOT_HOST, ROBOT_PORT, tcp_pos_servoj_0, tcp_pos_servoj_1
+from config_ur import ROBOT_HOST, ROBOT_PORT, tcp_pos_servoj_0, tcp_pos_servoj_1
 
 # -------- functions -------------
 def setp_to_list(setp):

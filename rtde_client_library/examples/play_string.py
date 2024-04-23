@@ -30,7 +30,7 @@ import logging
 
 import rtde_client_library.rtde.rtde as rtde
 import rtde_client_library.rtde.rtde_config as rtde_config
-from config import ROBOT_HOST, ROBOT_PORT, tcp_poses_sel, q_poses_sel
+from config_ur import ROBOT_HOST, ROBOT_PORT, tcp_poses_sel, q_poses_sel
 
 import tkinter as tk
 from tkinter import messagebox
