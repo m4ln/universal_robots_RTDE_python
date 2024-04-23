@@ -1,5 +1,8 @@
 ''' This file is for the configuration of the robot and the control loop.'''
 
+################################################################################
+# Shouldn't be changed
+
 # Define the robot's host IP and port
 ROBOT_HOST = "169.254.91.163"
 ROBOT_PORT = 30004
@@ -7,16 +10,21 @@ ROBOT_PORT = 30004
 # small value for small deviation
 EPSILON = 0.001
 
+################################################################################
+# TCP positions
+
 # enter the configuration of the tcp points you want to use
 # tcp_pos_config = [0,1,0,2,3,4,3,2]
 # tcp_pos_config = [7,8,9,10,9,8]
-tcp_pos_config = [0, 1, 0, 2, 3, 4, 3, 4, 3, 5, 6, 7, 8, 9, 10, 9, 10, 8, 7, 6]
-
+# tcp_pos_config = [0, 1, 0, 2, 3, 4, 3, 4, 3, 5, 6, 7, 8, 9, 10, 9, 10, 8, 7, 6]
+tcp_pos_config = [0]
 # RX,RY,RZ for planar on x-y axis = 2.951, 1.077, ...
 
 # single string (move in y direction)
-tcp_pos_0 = [-0.24, 0.015, 0.119, 2.255, 2.221, 0] # moving back
-tcp_pos_1 = [-0.24, -0.266, 0.122, 2.255, 2.221, 0] # playing
+tcp_pos_0 = [-0.036, -0.192, 0.176, 2.961, 1.165, 0.097]
+tcp_pos_1 = [-0.198, -0.319, 0.176, 2.969, 1.172, 0.117]
+# tcp_pos_0 = [-0.24, 0.015, 0.147, 2.255, 2.221, 0] # moving back
+# tcp_pos_1 = [-0.24, -0.266, 0.147, 2.255, 2.221, 0] # playing
 
 # lower string
 tcp_pos_2 = [-0.09, -0.212, 0.209, 0.49, 3.118, 0.035] # moving back
@@ -30,6 +38,10 @@ tcp_pos_7 = [-0.098, -0.136, 0.522, 1.431, 2.755, -0.091] # moving up
 tcp_pos_8 = [-0.011, -0.167, 0.522, 0.617, 3.028, -0.072] # moving to new position (string)
 tcp_pos_9 = [0.0393, -0.171, 0.406, 0.655, 2.799, -0.257] # position on string
 tcp_pos_10 = [0.23, -0.237, 0.475, 0.655, 2.799, -0.257] # moving front
+
+# servoj
+tcp_pos_servoj_0 = tcp_pos_0.copy()
+tcp_pos_servoj_1 = tcp_pos_1.copy()
 
 
 ### test for interpolation
@@ -63,8 +75,28 @@ tcp_poses_sel = []
 for pos in tcp_pos_config:
     tcp_poses_sel.append(globals()["tcp_pos_%i" % pos])
 
-tcp_poses_all = []
-# make a dynaminc list of tcp positions
-# for i in range(12):
-#     tcp_poses_all.append(globals()["tcp_pos_%i" % i])
+################################################################################
+# joint (q) positions
 
+import math
+
+# convert degree to radians
+def deg_to_rad(deg):
+    return math.radians(deg)
+
+q_pos_config = [0]
+
+# single string (move in y direction)
+q_pos_deg_0 = [39, -72, 92, -105, -91, -275]
+q_pos_deg_1 = [90, -72, 92, -105, -91, -275]
+q_pos_deg_2 = [90, -72, 70, -105, -91, -275]
+
+q_pos_0 = [deg_to_rad(q) for q in q_pos_deg_0]
+q_pos_1 = [deg_to_rad(q) for q in q_pos_deg_1]
+q_pos_2 = [deg_to_rad(q) for q in q_pos_deg_2]
+
+# enter the configuration of the tcp points you want to use
+q_poses_sel = []
+# make a list of the q points you want to use
+for pos in q_pos_config:
+    q_poses_sel.append(globals()["q_pos_%i" % pos])

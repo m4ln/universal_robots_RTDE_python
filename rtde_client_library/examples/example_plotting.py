@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 import sys
 
 sys.path.append("..")
-import rtde.csv_reader as csv_reader
+import rtde_client_library.rtde.csv_reader as csv_reader
 
 with open("robot_data.csv") as csvfile:
     r = csv_reader.CSVReader(csvfile)

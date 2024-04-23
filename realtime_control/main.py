@@ -12,18 +12,11 @@ import random
 
 import URBasic
 import math
-import numpy as np
-import sys
-import cv2
 import time
-import imutils
-from imutils.video import VideoStream
 import math3d as m3d
 from pythonosc import dispatcher
 from pythonosc import osc_server
-from pythonosc import udp_client
 from typing import List, Any
-import _thread
 import threading
 
 from config import ROBOT_HOST, tcp_pos_servoj_0, tcp_pos_servoj_1

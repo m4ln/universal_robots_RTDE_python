@@ -30,7 +30,7 @@ import sys
 
 sys.path.append("..")
 
-import rtde.csv_reader as csv_reader
+import rtde_client_library.rtde.csv_reader as csv_reader
 
 
 class Plotter(object):
