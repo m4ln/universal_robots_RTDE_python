@@ -20,7 +20,7 @@ from pythonosc import osc_server
 from typing import List, Any
 import threading
 
-from config_ur import ROBOT_HOST, tcp_pos_servoj_0, tcp_pos_servoj_1
+from config_ur import ROBOT_HOST, ACCELERATION, VELOCITY, ROBOT_START_POS
 from config_osc import OSC_HOST, OSC_PORT
 
 timestamp = 0
@@ -30,20 +30,20 @@ debug = True
 def print_osc(address: str, *osc_arguments: List[Any]) -> None:
     print(f"{address}: {osc_arguments}")
 
-# moves with predefined y/p/y values when receiving only 3 arguments
 def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
+    """
+    Function to move the robot to a new cartesian position
+    :param address:
+    :param osc_arguments: x, y, z, [optional] roll, pitch, yaw values of the new position
+
+    :return: None
+    """
     global timestamp, min_interval, speed, acceleration, cnt, setp, debug, robot
 
-    # con.send_start()
-    # state = con.receive()
-    # if state is None:
-    #     return
-
+    # todo solve this problem on touchdesigner side
     if osc_arguments[2] != 50.0:
         return
 
-    current_time = time.time()
-    # tcp_pose = state.actual_TCP_pose
     target_x = (osc_arguments[0] - 500) * 0.001
     target_y = (osc_arguments[1] - 400) / 1000
     target_z = (osc_arguments[2] + 140) / 1000
@@ -57,12 +57,8 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
         target_pitch = 0
         target_yaw = 0.04
 
-    # if (current_time - timestamp) > min_interval:
-        # print('current time - timestamp = ' + str(current_time - timestamp))
-        # print('min_interval = ' + str(min_interval))
-
     if debug:
-        print(osc_arguments)
+        print('OSC message:', osc_arguments)
 
     new_setp = [target_x, target_y, target_z, target_roll, target_pitch,
                 target_yaw]
@@ -71,26 +67,7 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
 
     robot.set_realtime_pose(new_setp)
 
-    timestamp = current_time
-
-    # elif debug:
-        # print("message overflow, discarding request")
-        # print("lower min_interval if you want to send with shorter intervals")
-
-
 """SETTINGS AND VARIABLES ________________________________________________________________"""
-
-ROBOT_IP = ROBOT_HOST
-ACCELERATION = 0.3  # Robot acceleration value
-VELOCITY = 0.3  # Robot speed value
-
-# The Joint position the robot starts at
-robot_startposition = (math.radians(39),
-                    math.radians(-72),
-                    math.radians(92),
-                    math.radians(-105),
-                    math.radians(-91),
-                    math.radians(-275))
 
 # Size of the robot view-window
 # The robot will at most move this distance in each direction
@@ -240,62 +217,19 @@ def set_lookorigin():
     orig = m3d.Transform(position)
     return orig
 
-def move_to_face(robot_pos):
-    """
-    Function that moves the robot to the position of the face
-
-    Inputs:
-        list_of_facepos: a list of face positions captured by the camera, only the first face will be used
-        robot_pos: position of the robot in 2D - coordinates
-
-    Return Value:
-        prev_robot_pos: 2D robot position the robot will move to. The basis for the next call to this funtion as robot_pos
-    """
-
-    # print("..", robot_target_xy)
-
-    prev_robot_pos = robot_pos
-
-    x = prev_robot_pos[0] + random.uniform(0, 0.01)
-    y = prev_robot_pos[1] + random.uniform(0, 0.01)
-    z = 0
-    xyz_coords = m3d.Vector(x, y, z)
-
-    x_pos_perc = x / max_x
-    y_pos_perc = y / max_y
-
-    x_rot = x_pos_perc * hor_rot_max
-    y_rot = y_pos_perc * vert_rot_max * -1
-
-    tcp_rotation_rpy = [y_rot, x_rot, 0]
-    # tcp_rotation_rvec = convert_rpy(tcp_rotation_rpy)
-    tcp_orient = m3d.Orientation.new_euler(tcp_rotation_rpy, encoding='xyz')
-    position_vec_coords = m3d.Transform(tcp_orient, xyz_coords)
-
-    oriented_xyz = origin * position_vec_coords
-    oriented_xyz_coord = oriented_xyz.get_pose_vector()
-
-    coordinates = oriented_xyz_coord
-
-    qnear = robot.get_actual_joint_positions()
-    next_pose = coordinates
-    # robot.set_realtime_pose(next_pose)
-
-    return prev_robot_pos
-
 """LOOP ____________________________________________________________________"""
 
 # initialise robot with URBasic
 print("initialising robot")
 robotModel = URBasic.robotModel.RobotModel()
-robot = URBasic.urScriptExt.UrScriptExt(host=ROBOT_IP,robotModel=robotModel)
+robot = URBasic.urScriptExt.UrScriptExt(host=ROBOT_HOST,robotModel=robotModel)
 
 robot.reset_error()
 print("robot initialised")
 time.sleep(1)
 
 # Move Robot to the midpoint of the lookplane
-# robot.movej(q=robot_startposition, a= ACCELERATION, v= VELOCITY )
+robot.movej(q=ROBOT_START_POS, a= ACCELERATION, v= VELOCITY )
 
 robot_position = [0,0]
 origin = set_lookorigin()
@@ -306,10 +240,9 @@ time.sleep(1) # just a short wait to make sure everything is initialised
 cnt= 0
 
 try:
+    # Set up the OSC server
     dispatcher = dispatcher.Dispatcher()
     dispatcher.map("/position", move_cartesian)
-    # dispatcher.map("/position", print_osc)
-
 
     server = osc_server.ThreadingOSCUDPServer(
               (OSC_HOST, OSC_PORT), dispatcher)

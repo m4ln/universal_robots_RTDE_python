@@ -23,18 +23,26 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import sys
+import time
 
 sys.path.append("..")
 import logging
 
-import rtde_client_library.rtde.rtde as rtde
-import rtde_client_library.rtde.rtde_config as rtde_config
-from config_ur import ROBOT_HOST, ROBOT_PORT
+import RTDE_Python_Client_Library.rtde.rtde as rtde
+import RTDE_Python_Client_Library.rtde.rtde_config as rtde_config
+from config_ur import ROBOT_HOST, ROBOT_PORT, tcp_poses_sel, q_poses_sel
 
+import tkinter as tk
+from tkinter import messagebox
+
+# select the list of tcp positions you want to use
+tcp_poses = q_poses_sel
+# tcp_poses = tcp_poses_sel
+print('TCP poses to move between:', tcp_poses)
 # logging.basicConfig(level=logging.INFO)
 
 # Define the configuration file name
-config_filename = "control_loop_configuration.xml"
+config_filename = "x_shape_control_loop_configuration.xml"
 
 # Flag to keep the control loop running
 keep_running = True
@@ -60,10 +68,6 @@ con.get_controller_version()
 con.send_output_setup(state_names, state_types)
 setp = con.send_input_setup(setp_names, setp_types)
 watchdog = con.send_input_setup(watchdog_names, watchdog_types)
-
-# Setpoints to move the robot between these two poses (in joint space)
-setp1 = [-0.12, -0.43, 0.14, 0, 3.11, 0.04]
-setp2 = [-0.12, -0.51, 0.21, 0, 3.11, 0.04]
 
 # Initialize the setpoint registers to 0
 setp.input_double_register_0 = 0
@@ -96,30 +100,59 @@ def list_to_setp(sp, list):
 if not con.send_start():
     sys.exit()
 
+# Create a new Tk root window
+root = tk.Tk()
+# Hide the main window
+root.withdraw()
+
+# receive the current TCP pose
+# receive the current state
+state = con.receive()
+setp_curr = state.actual_TCP_pose
+# overwrite_curr_all = messagebox.askyesno(title="Confirmation", message="Save the current position as start position?")
+# # if the current TCP pose is not the same as the first TCP pose, set the current TCP pose to the first TCP pose
+# if overwrite_curr_all:
+#     # overwrite the current TCP pose with the first TCP pose
+#     tcp_poses.insert(0, setp_curr)
+# else:
+#     # ask to only overwrite the z-coordinate
+#     overwrite_curr_z = messagebox.askyesno(title="Confirmation", message="set offset (overwrite z-coordinate)?")
+#     if overwrite_curr_z:
+#
+#         # in each list entry in TCP poses overwrite the
+
 # control loop
 move_completed = True
+cnt = -1
+tcp_pos = []
 while keep_running:
     # receive the current state
     state = con.receive()
 
     if state is None:
+        print("No data received")
         break
 
     # If a move has been completed and the robot is ready for a new one
     if move_completed and state.output_int_register_0 == 1:
+        print('New pose %d = %s' % (cnt, str(tcp_pos)))
+        cnt += 1
+        # check if the counter is out of bounds otherwise reset it
+        if cnt >= len(tcp_poses):
+            cnt = 0
         move_completed = False
         # Determine the new setpoint
-        new_setp = setp1 if setp_to_list(setp) == setp2 else setp2
-        # Update the setpoint
-        list_to_setp(setp, new_setp)
-        print("New pose = " + str(new_setp))
+        tcp_pos = tcp_poses[cnt]
+        # Determine the new setpoint
+        list_to_setp(setp, tcp_pos)
+        # print("New pose = " + str(tcp_pos))
         # send new setpoint
         con.send(setp)
         # set watchdog
         watchdog.input_int_register_0 = 1
     # If a move is in progress and the robot is not ready for a new one
     elif not move_completed and state.output_int_register_0 == 0:
-        print("Move to confirmed pose (joint) = " + str(state.target_q))
+        print("Moved to confirmed pose (TCP) = " + str(state.actual_TCP_pose))
         move_completed = True
         # reset watchdog
         watchdog.input_int_register_0 = 0

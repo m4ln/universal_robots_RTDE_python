@@ -27,14 +27,14 @@ import sys
 sys.path.append("..")
 import logging
 
-import rtde_client_library.rtde.rtde as rtde
-import rtde_client_library.rtde.rtde_config as rtde_config
-from config_ur import ROBOT_HOST, ROBOT_PORT, tcp_pos_1, tcp_pos_2, tcp_pos_3, tcp_pos_4
+import RTDE_Python_Client_Library.rtde.rtde as rtde
+import RTDE_Python_Client_Library.rtde.rtde_config as rtde_config
+from config_ur import ROBOT_HOST, ROBOT_PORT
 
 # logging.basicConfig(level=logging.INFO)
 
 # Define the configuration file name
-config_filename = "x_shape_control_loop_configuration.xml"
+config_filename = "control_loop_configuration.xml"
 
 # Flag to keep the control loop running
 keep_running = True
@@ -61,6 +61,10 @@ con.send_output_setup(state_names, state_types)
 setp = con.send_input_setup(setp_names, setp_types)
 watchdog = con.send_input_setup(watchdog_names, watchdog_types)
 
+# Setpoints to move the robot between these two poses (in joint space)
+setp1 = [-0.12, -0.43, 0.14, 0, 3.11, 0.04]
+setp2 = [-0.12, -0.51, 0.21, 0, 3.11, 0.04]
+
 # Initialize the setpoint registers to 0
 setp.input_double_register_0 = 0
 setp.input_double_register_1 = 0
@@ -72,12 +76,14 @@ setp.input_double_register_5 = 0
 # The function "rtde_set_watchdog" in the "rtde_control_loop.urp" creates a 1 Hz watchdog
 watchdog.input_int_register_0 = 0
 
+
 def setp_to_list(sp):
     '''Convert the setpoint to a list.'''
     sp_list = []
     for i in range(0, 6):
         sp_list.append(sp.__dict__["input_double_register_%i" % i])
     return sp_list
+
 
 def list_to_setp(sp, list):
     '''Convert the list to a setpoint.'''
@@ -103,14 +109,7 @@ while keep_running:
     if move_completed and state.output_int_register_0 == 1:
         move_completed = False
         # Determine the new setpoint
-        if setp_to_list(setp) == tcp_pos_1:
-            new_setp = tcp_pos_2
-        elif setp_to_list(setp) == tcp_pos_2:
-            new_setp = tcp_pos_3
-        elif setp_to_list(setp) == tcp_pos_3:
-            new_setp = tcp_pos_4
-        else:
-            new_setp = tcp_pos_1
+        new_setp = setp1 if setp_to_list(setp) == setp2 else setp2
         # Update the setpoint
         list_to_setp(setp, new_setp)
         print("New pose = " + str(new_setp))
@@ -120,7 +119,7 @@ while keep_running:
         watchdog.input_int_register_0 = 1
     # If a move is in progress and the robot is not ready for a new one
     elif not move_completed and state.output_int_register_0 == 0:
-        print("Moved to confirmed pose (TCP) = " + str(state.actual_TCP_pose))
+        print("Move to confirmed pose (joint) = " + str(state.target_q))
         move_completed = True
         # reset watchdog
         watchdog.input_int_register_0 = 0

@@ -11,6 +11,21 @@ ROBOT_PORT = 30004
 EPSILON = 0.001
 
 ################################################################################
+# Robot real-time control
+import math
+
+ACCELERATION = 0.3  # Robot acceleration value
+VELOCITY = 0.3  # Robot speed value
+
+# The Joint position the robot starts at
+ROBOT_START_POS = (math.radians(39),
+                   math.radians(-72),
+                   math.radians(92),
+                   math.radians(-105),
+                   math.radians(-91),
+                   math.radians(-275))
+
+################################################################################
 # TCP positions
 
 # enter the configuration of the tcp points you want to use

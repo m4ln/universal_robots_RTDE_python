@@ -27,10 +27,10 @@ import logging
 import sys
 
 sys.path.append("..")
-import rtde_client_library.rtde.rtde as rtde
-import rtde_client_library.rtde.rtde_config as rtde_config
-import rtde_client_library.rtde.csv_writer as csv_writer
-import rtde_client_library.rtde.csv_binary_writer as csv_binary_writer
+import RTDE_Python_Client_Library.rtde.rtde as rtde
+import RTDE_Python_Client_Library.rtde.rtde_config as rtde_config
+import RTDE_Python_Client_Library.rtde.csv_writer as csv_writer
+import RTDE_Python_Client_Library.rtde.csv_binary_writer as csv_binary_writer
 
 # parameters
 parser = argparse.ArgumentParser()

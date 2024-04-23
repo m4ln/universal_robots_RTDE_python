@@ -4,8 +4,8 @@ Code written based on servoj example from: https://github.com/davizinho5/RTDE_co
 import sys
 sys.path.append('')
 import logging
-import rtde_client_library.rtde.rtde as rtde
-import rtde_client_library.rtde.rtde_config as rtde_config
+import RTDE_Python_Client_Library.rtde.rtde as rtde
+import RTDE_Python_Client_Library.rtde.rtde_config as rtde_config
 
 import time
 from matplotlib import pyplot as plt
