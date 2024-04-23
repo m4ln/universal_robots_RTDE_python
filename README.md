@@ -1,6 +1,10 @@
 # Universal Robots
 
-This documentation refers to the UR model UR3e, Polyscope v. 5.12
+This projects is a collection of real-time data exchange (RTDE) scripts for the 
+Universal Robots. The scripts are written in Python and are based on the RTDE 
+Python Client (`./RTDE_Python_Client_Library/rtde/`) and the URBasic 
+(`./realtime_control/URBasic`) libraries. 
+The scripts are tested on the UR model UR3e, Polyscope v. 5.12.
 - manual: https://myurhelpresources.blob.core.windows.net/resources/PDF/SW_5_12/e-Series_SW_en_Global.pdf
 - help forum: https://forum.universal-robots.com/
 
@@ -44,6 +48,8 @@ config_filename = '\<config_file\>.xml'
 ### Change Output Frequency
 In the file `rtde/rtde.py` the function `send_output_setup(frequency=125)` the value can be changed to `frequency=500` to increase the output frequency
 
-### Run example 
+## License
+This project contains several subprojects which are licensed under different licenses, 
+i.e. for each subproject, the license is specified in the respective folder.
 
 
