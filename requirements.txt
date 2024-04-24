@@ -1,0 +1,6 @@
+math3d~=4.0.0
+python-osc~=1.8.3
+numpy~=1.26.4
+six~=1.16.0
+matplotlib~=3.8.3
+setuptools~=68.2.0
