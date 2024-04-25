@@ -9,7 +9,7 @@ Created by Robin Godwyll
 License: GPL v3 https://www.gnu.org/licenses/gpl-3.0.en.html
 
 """
-import random
+import os
 
 import URBasic
 import math
@@ -23,12 +23,54 @@ import threading
 from config_ur import ROBOT_HOST, ACCELERATION, VELOCITY, ROBOT_START_POS
 from config_osc import OSC_HOST, OSC_PORT
 
-timestamp = 0
-min_interval = 0.02
-debug = True
+"""SETTINGS AND VARIABLES ___________________________________________________"""
+
+# Size of the robot view-window
+# The robot will at most move this distance in each direction
+max_x = 0.2
+max_y = 0.2
+
+# Maximum Rotation of the robot at the edge of the view window
+hor_rot_max = math.radians(50)
+vert_rot_max = math.radians(25)
+
+debug = False
+log_folder = 'ur_log'
+"""FUNCTIONS ________________________________________________________________"""
+
+
+def stop_server():
+    global keep_running
+    keep_running = False
+
+
+def close_all(server, logfile, robot):
+    server.shutdown()
+    server.server_close()
+    logfile.close()
+    robot.close()
+
+
+def remove_folder(folder_name):
+    import shutil
+    # get current path
+    root = os.getcwd()
+    path = os.path.join(root, folder_name)
+
+    for filename in os.listdir(path):
+        file_path = os.path.join(path, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print('Failed to delete %s. Reason: %s' % (file_path, e))
+
 
 def print_osc(address: str, *osc_arguments: List[Any]) -> None:
     print(f"{address}: {osc_arguments}")
+
 
 def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
     """
@@ -38,15 +80,12 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
 
     :return: None
     """
-    global timestamp, min_interval, speed, acceleration, cnt, setp, debug, robot
+    global speed, acceleration, robot, logfile
 
-    # todo solve this problem on touchdesigner side
-    if osc_arguments[2] != 50.0:
-        return
-
-    target_x = (osc_arguments[0] - 500) * 0.001
-    target_y = (osc_arguments[1] - 400) / 1000
-    target_z = (osc_arguments[2] + 140) / 1000
+    # make sure the osc_arguments are in float format
+    target_x = (osc_arguments[0]) / 1000
+    target_y = (osc_arguments[1]) / 1000
+    target_z = (osc_arguments[2]) / 1000
 
     if len(osc_arguments) == 6:
         target_roll = osc_arguments[3]
@@ -63,26 +102,27 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
     new_setp = [target_x, target_y, target_z, target_roll, target_pitch,
                 target_yaw]
 
-    print("New pose = " + str(new_setp))
-
     robot.set_realtime_pose(new_setp)
 
-"""SETTINGS AND VARIABLES ________________________________________________________________"""
+    # if in the file './ur_log/UrEvent.log' there is a line with the text 'URBasic_realTimeClientEvent - ERROR - SendProgram: Program Stopped but not finished!!!', the program will stop
+    root = os.getcwd()
+    path = os.path.join(root, log_folder, 'UrEvent.log')
+    with open(path, "r") as file:
+        for line in file:
+            if 'URBasic_realTimeClientEvent - ERROR - SendProgram: Program Stopped but not finiched!!!' in line:
+                print("Program Stopped but not finished!!!")
+                # write the actual tcp position to the logfile
+                tcp_pos = robot.get_actual_tcp_pose()
+                logfile.write(
+                    f"{'actual:'}{tcp_pos[0]}, {tcp_pos[1]}, {tcp_pos[2]}, {tcp_pos[3]}, {tcp_pos[4]}, {tcp_pos[5]}\n")
+                logfile.write(
+                    f"{'target:'}{target_x}, {target_y}, {target_z}, {target_roll}, {target_pitch}, {target_yaw}\n")
+                stop_server()
+                exit()
+                # sys.exit()
 
-# Size of the robot view-window
-# The robot will at most move this distance in each direction
-max_x = 0.2
-max_y = 0.2
+    print("New pose = " + str(new_setp))
 
-# Maximum Rotation of the robot at the edge of the view window
-hor_rot_max = math.radians(50)
-vert_rot_max = math.radians(25)
-
-time.sleep(0.2)
-
-
-
-"""FUNCTIONS _____________________________________________________________________________"""
 
 """def convert_rpy(angles):
 
@@ -162,6 +202,7 @@ time.sleep(0.2)
     return rotation_vec
 """
 
+
 def check_max_xy(xy_coord):
     """
     Checks if the face is outside of the predefined maximum values on the lookaraound plane
@@ -177,7 +218,7 @@ def check_max_xy(xy_coord):
     """
 
     x_y = [0, 0]
-    #print("xy before conversion: ", xy_coord)
+    # print("xy before conversion: ", xy_coord)
 
     if -max_x <= xy_coord[0] <= max_x:
         # checks if the resulting position would be outside of max_x
@@ -198,9 +239,10 @@ def check_max_xy(xy_coord):
         x_y[1] = max_y
     else:
         raise Exception(" y is wrong somehow", xy_coord[1], max_y)
-    #print("xy after conversion: ", x_y)
+    # print("xy after conversion: ", x_y)
 
     return x_y
+
 
 def set_lookorigin():
     """
@@ -217,46 +259,66 @@ def set_lookorigin():
     orig = m3d.Transform(position)
     return orig
 
-"""LOOP ____________________________________________________________________"""
+
+"""LOOP _____________________________________________________________________"""
+
+# remove the folder 'ur_log' and its content
+remove_folder(log_folder)
 
 # initialise robot with URBasic
 print("initialising robot")
 robotModel = URBasic.robotModel.RobotModel()
-robot = URBasic.urScriptExt.UrScriptExt(host=ROBOT_HOST,robotModel=robotModel)
+robot = URBasic.urScriptExt.UrScriptExt(host=ROBOT_HOST, robotModel=robotModel)
 
 robot.reset_error()
 print("robot initialised")
 time.sleep(1)
 
 # Move Robot to the midpoint of the lookplane
-robot.movej(q=ROBOT_START_POS, a= ACCELERATION, v= VELOCITY )
+# robot.movej(q=ROBOT_START_POS, a= ACCELERATION, v= VELOCITY )
 
-robot_position = [0,0]
+robot_position = [0, 0]
 origin = set_lookorigin()
 
 robot.init_realtime_control()  # starts the realtime control loop on the Universal-Robot Controller
-time.sleep(1) # just a short wait to make sure everything is initialised
+time.sleep(1)  # just a short wait to make sure everything is initialised
 
-cnt= 0
+# set up a logfile to log the robot position
+logfile = open("./ur_log/tcp_pos.txt", "w")
+# if the file is not empty, overwrite it
+logfile.truncate(0)
+logfile.write("x, y, z, rx, ry, rz\n")
+
+# Create a flag for running the server
+server_running = threading.Event()
+server_running.set()
+
+# Set up the OSC server
+dispatcher = dispatcher.Dispatcher()
+dispatcher.map("/position", print_osc)
+dispatcher.map("/position", move_cartesian)
+server = osc_server.ThreadingOSCUDPServer(
+    (OSC_HOST, OSC_PORT), dispatcher)
+print("Serving on {}".format(server.server_address))
+
+keep_running = True
 
 try:
-    # Set up the OSC server
-    dispatcher = dispatcher.Dispatcher()
-    dispatcher.map("/position", move_cartesian)
-
-    server = osc_server.ThreadingOSCUDPServer(
-              (OSC_HOST, OSC_PORT), dispatcher)
-    print("Serving on {}".format(server.server_address))
     # Create a new thread for the OSC server
     server_thread = threading.Thread(target=server.serve_forever)
-
     # Start the thread
     server_thread.start()
 
+    while keep_running:
+        print('running')
+        time.sleep(1)  # Sleep for a while to reduce CPU usage
+
+    close_all(server, logfile, robot)
+
 except KeyboardInterrupt:
     print("closing robot connection")
-    # Remember to always close the robot connection, otherwise it is not possible to reconnect
-    robot.close()
-
+    close_all(server, logfile, robot)
+    exit()
 except:
-    robot.close()
+    close_all(server, logfile, robot)
+    exit()
