@@ -36,6 +36,8 @@ vert_rot_max = math.radians(25)
 
 debug = False
 log_folder = 'ur_log'
+prev_osc_arguments = [0, 0, 0, 0, 0, 0]
+
 """FUNCTIONS ________________________________________________________________"""
 
 
@@ -80,7 +82,7 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
 
     :return: None
     """
-    global speed, acceleration, robot, logfile
+    global speed, acceleration, robot, logfile, prev_osc_arguments
 
     # make sure the osc_arguments are in float format
     target_x = (osc_arguments[0]) / 1000
@@ -114,6 +116,8 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
                 # write the actual tcp position to the logfile
                 tcp_pos = robot.get_actual_tcp_pose()
                 logfile.write(
+                    f"{'previous:'}{prev_osc_arguments[0]}, {prev_osc_arguments[1]}, {prev_osc_arguments[2]}, {prev_osc_arguments[3]}, {prev_osc_arguments[4]}, {prev_osc_arguments[5]}\n")
+                logfile.write(
                     f"{'actual:'}{tcp_pos[0]}, {tcp_pos[1]}, {tcp_pos[2]}, {tcp_pos[3]}, {tcp_pos[4]}, {tcp_pos[5]}\n")
                 logfile.write(
                     f"{'target:'}{target_x}, {target_y}, {target_z}, {target_roll}, {target_pitch}, {target_yaw}\n")
@@ -122,6 +126,8 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
                 # sys.exit()
 
     print("New pose = " + str(new_setp))
+    prev_osc_arguments = [target_x, target_y, target_z, target_roll,
+                          target_pitch, target_yaw]
 
 
 """def convert_rpy(angles):
@@ -295,9 +301,9 @@ server_running.set()
 
 # Set up the OSC server
 dispatcher = dispatcher.Dispatcher()
-dispatcher.map("/position", print_osc)
+# dispatcher.map("/position", print_osc)
 dispatcher.map("/position", move_cartesian)
-server = osc_server.ThreadingOSCUDPServer(
+server = osc_server.BlockingOSCUDPServer(
     (OSC_HOST, OSC_PORT), dispatcher)
 print("Serving on {}".format(server.server_address))
 
@@ -310,7 +316,6 @@ try:
     server_thread.start()
 
     while keep_running:
-        print('running')
         time.sleep(1)  # Sleep for a while to reduce CPU usage
 
     close_all(server, logfile, robot)
