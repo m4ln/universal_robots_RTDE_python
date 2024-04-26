@@ -27,8 +27,12 @@ from config_osc import OSC_HOST, OSC_PORT
 
 # Size of the robot view-window
 # The robot will at most move this distance in each direction
+min_x = -0.2
 max_x = 0.2
-max_y = 0.2
+min_y = -0.39
+max_y = -0.27
+min_z = 0.18
+max_z = 0.4
 
 # Maximum Rotation of the robot at the edge of the view window
 hor_rot_max = math.radians(50)
@@ -85,9 +89,26 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
     global speed, acceleration, robot, logfile, prev_osc_arguments
 
     # make sure the osc_arguments are in float format
-    target_x = (osc_arguments[0]) / 1000
-    target_y = (osc_arguments[1]) / 1000
-    target_z = (osc_arguments[2]) / 1000
+    # store osc_arguments in float variables
+    target_x = float(osc_arguments[0])
+    target_y = float(osc_arguments[1])
+    target_z = float(osc_arguments[2])
+
+    # convert from mm to m
+    target_x /= 1000
+    target_y /= 1000
+    target_z /= 1000
+
+    # check if target_x, target_y, target_z are in the range between min and max
+    if target_x < min_x or target_x > max_x:
+        print("x is out of range", target_x, min_x, max_x)
+        return
+    if target_y < min_y or target_y > max_y:
+        print("y is out of range", target_y, min_y, max_y)
+        return
+    if target_z < min_z or target_z > max_z:
+        print("z is out of range", target_z, min_z, max_z)
+        return
 
     if len(osc_arguments) == 6:
         target_roll = osc_arguments[3]
