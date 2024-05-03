@@ -186,71 +186,78 @@ def on_press(key):
         if key.char is not None:
             # Continue with your logic using key.char here
             pass
+
+        if key.char == "a":
+            print("getting pos")
+            pos = get_current_position()
+            print(pos)
+            print(type(pos))
+            #moves.append(pos.tolist())
+
+            pose_key = "pose" #_" + str(pose_counter)
+            pose_values = []
+            pose_values = pos.tolist()
+            a = 0.1
+            v = 0.1
+            t = 1
+            r = 0.01
+
+            pose_values.append(a)
+            pose_values.append(v)
+            pose_values.append(t)
+            pose_values.append(r)
+
+            print(pose_values)
+
+
+            ++pose_counter
+            new_move = {}
+            new_move[pose_key] = pose_values
+            moves.append(new_move) #[pose_key] = pos_values
+
+        # moving through all points    
+        elif key.char == "p":
+            
+            print("replay")
+            robot.end_freedrive_mode()
+            time.sleep(1)
+            #robot.init_realtime_control()  # starts the realtime control loop on the Universal-Robot Controller
+            time.sleep(1)  # just a short wait to make sure everything is initialised
+        
+            # go throug a list of dictionaries
+            for smove in moves:
+                #robot.stopl()
+                robot.movel(pose=smove["pose"][:6], q=robot.get_actual_tcp_pose())#,a=smove["pose"][6],v=smove["pose"][7],r=smove["pose"][9])
+                #time.sleep(0.2)
+
+            #doesnt seem to work:
+            #robot.movel_waypoints(moves)
+
+            # old version
+            # for smove in moves:
+            #      print(smove)
+            #      print(type(smove))
+            #      robot.set_realtime_pose(smove)
+            #      time.sleep(2)
+        
+        # clearing points
+        elif key.char == "c":
+            moves.clear()
+
+        # load waypoints 
+        elif key.char == "l":
+            moves.clear()
+            moves = load_waypoints(waypoint_file)
+
+        # save waypoints
+        elif key.char == "s":
+            save_waypoints(moves, waypoint_file)
+
+
+    
     except AttributeError:
         # Handle the case when key.char is not available
         pass
-
-    if key.char == "a":
-        print("getting pos")
-        pos = get_current_position()
-        print(pos)
-        print(type(pos))
-        #moves.append(pos.tolist())
-
-        pose_key = "pose" #_" + str(pose_counter)
-        pose_values = pos.tolist()  # Example values for [6d]
-        a = 0.1
-        v = 0.1
-        t = 1
-        r = 0.01
-
-        pose_values.append(a)
-        pose_values.append(v)
-        pose_values.append(t)
-        pose_values.append(r)
-
-
-        ++pose_counter
-        new_move = {}
-        new_move[pose_key] = pose_values
-        moves.append(new_move) #[pose_key] = pos_values
-
-    # moving through all points    
-    elif key.char == "p":
-        
-        print("replay")
-        robot.end_freedrive_mode()
-        time.sleep(1)
-        #robot.init_realtime_control()  # starts the realtime control loop on the Universal-Robot Controller
-        time.sleep(1)  # just a short wait to make sure everything is initialised
-       
-        # go throug a list of dictionaries
-        for smove in moves:
-            robot.stopl()
-            robot.movel(pose=smove["pose"][:6],a=smove["pose"][6],v=smove["pose"][7],t=smove["pose"][8],r=smove["pose"][9])
-            #time.sleep(smove["pose"][8]-0.01)
-       # doesnt seem to work:
-       # robot.movel_waypoints(moves)
-
-        # old version
-        # for smove in moves:
-        #      print(smove)
-        #      print(type(smove))
-        #      robot.set_realtime_pose(smove)
-        #      time.sleep(2)
-    
-    # clearing points
-    elif key.char == "c":
-        moves.clear()
-
-    # load waypoints 
-    elif key.char == "l":
-        moves.clear()
-        moves = load_waypoints(waypoint_file)
-
-    # save waypoints
-    elif key.char == "s":
-        save_waypoints(moves, waypoint_file)
 
     #print(get_current_position())
     
