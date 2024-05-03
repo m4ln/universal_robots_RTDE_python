@@ -227,7 +227,7 @@ def on_press(key):
             # go throug a list of dictionaries
             for smove in moves:
                 #robot.stopl()
-                robot.movel(pose=smove["pose"][:6], q=robot.get_actual_tcp_pose())#,a=smove["pose"][6],v=smove["pose"][7],r=smove["pose"][9])
+                robot.movel(pose=smove["pose"][:6])#,a=smove["pose"][6],v=smove["pose"][7],r=smove["pose"][9])
                 #time.sleep(0.2)
 
             #doesnt seem to work:
