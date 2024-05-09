@@ -135,6 +135,8 @@ end
 
         programString = prg.format(**locals())
 
+        print(programString)
+
         self.robotConnector.RealTimeClient.SendProgram(programString)
         #time.sleep(0.5)
         if(wait):
@@ -246,6 +248,7 @@ end
 
         movestr = ''
         if np.size(pose.shape)==2:
+            print("DEBUG: np.size = 2")
             for idx in range(np.size(pose, 0)):
                 posex = np.round(pose[idx], 4)
                 posex = posex.tolist()
@@ -254,19 +257,24 @@ end
                     pose_via_x = pose_via_x.tolist()
                     pose_via_val='{prefix_via}{pose_via_x},'
 
-                if (np.size(pose, 0)-1)==idx:
-                    r=0
-                movestr +=  '    move{movetype}({pose_via_val} {prefix}{posex}, a={a}, v={v}, {t_val} r={r})\n'.format(**locals())
+            #    if (np.size(pose, 0)-1)==idx:
+            #        r=0
 
-            movestr +=  '    stopl({a})\n'.format(**locals())
+                tval='t={t},'.format(**locals())
+                movestr +=  '    move{movetype}({pose_via_val} {prefix}{posex}, a={a}, v={v}, t={t}, r={r})\n'.format(**locals())
+
+            #movestr +=  '    stopl({a})\n'.format(**locals())
         else:
+            print("DEBUG: option 2")
             posex = np.round(pose, 4)
             posex = posex.tolist()
             if movetype =='c':
                 pose_via_x = np.round(pose_via, 4)
                 pose_via_x = pose_via_x.tolist()
                 pose_via_val='{prefix_via}{pose_via_x},'
-            movestr +=  '    move{movetype}({pose_via_val} {prefix}{posex}, a={a}, v={v}, {t_val} r={r})\n'.format(**locals())
+            
+            timestring='t={t},'.format(**locals())
+            movestr +=  '    move{movetype}({pose_via_val} {prefix}{posex}, a={a}, v={v}, {timestring} r={r})\n'.format(**locals())
 
 
 
@@ -1059,10 +1067,21 @@ end
         Parameters:
         pose: Target pose (which can also be specified as joint positions)
 
+        
+
         Return Value:
         True if within limits, false otherwise (bool)
         '''
+        
         raise NotImplementedError('Function Not yet implemented')
+        
+        prg = 'set_gravity({d})\n'
+
+        programString = prg.format(**locals())
+
+        self.robotConnector.RealTimeClient.Send(programString)
+        if(wait):
+            self.waitRobotIdleOrStopFlag()
 
     def popup(self, s, title='Popup', warning=False, error =False):
         '''
