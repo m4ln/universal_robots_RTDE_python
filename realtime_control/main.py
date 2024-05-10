@@ -100,15 +100,15 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
     target_z /= 1000
 
     # check if target_x, target_y, target_z are in the range between min and max
-    if target_x < min_x or target_x > max_x:
-        print("x is out of range", target_x, min_x, max_x)
-        return
-    if target_y < min_y or target_y > max_y:
-        print("y is out of range", target_y, min_y, max_y)
-        return
-    if target_z < min_z or target_z > max_z:
-        print("z is out of range", target_z, min_z, max_z)
-        return
+    # if target_x < min_x or target_x > max_x:
+    #     print("x is out of range", target_x, min_x, max_x)
+    #     return
+    # if target_y < min_y or target_y > max_y:
+    #     print("y is out of range", target_y, min_y, max_y)
+    #     return
+    # if target_z < min_z or target_z > max_z:
+    #     print("z is out of range", target_z, min_z, max_z)
+    #     return
 
     if len(osc_arguments) == 6:
         target_roll = osc_arguments[3]
