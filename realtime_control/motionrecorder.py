@@ -195,25 +195,30 @@ def on_press(key):
             #moves.append(pos.tolist())
 
             pose_key = "pose" #_" + str(pose_counter)
-            pose_values = []
-            pose_values = pos.tolist()
-            a = 0.1
-            v = 0.1
-            t = 1
-            r = 0.01
+            pose_values = {}
+            pose_values["pose"] = pos.tolist()
+            a = 1.1
+            v = 1.1
+            t = 0.3
+            r = 0.015
 
-            pose_values.append(a)
-            pose_values.append(v)
-            pose_values.append(t)
-            pose_values.append(r)
+            #pose_values.append(a)
+            #pose_values.append(v)
+            #pose_values.append(t)
+            #pose_values.append(r)
+
+            #pose_values["v"] = v
+            #pose_values["a"] = a
+            pose_values["t"] = t
+            pose_values["r"] = r
 
             print(pose_values)
 
 
             ++pose_counter
-            new_move = {}
-            new_move[pose_key] = pose_values
-            moves.append(new_move) #[pose_key] = pos_values
+            #new_move = {}
+            #new_move[pose_counter] = pose_values
+            moves.append(pose_values) #[pose_key] = pos_values
 
         # moving through all points    
         elif key.char == "p":
@@ -221,17 +226,17 @@ def on_press(key):
             print("replay")
             robot.end_freedrive_mode()
             time.sleep(1)
-            #robot.init_realtime_control()  # starts the realtime control loop on the Universal-Robot Controller
+            robot.init_realtime_control()  # starts the realtime control loop on the Universal-Robot Controller
             time.sleep(1)  # just a short wait to make sure everything is initialised
         
             # go throug a list of dictionaries
-            for smove in moves:
+            #for smove in moves:
                 #robot.stopl()
-                robot.movel(pose=smove["pose"][:6])#,a=smove["pose"][6],v=smove["pose"][7],r=smove["pose"][9])
+            #    robot.movel(pose=smove["pose"][:6], r=0.05)#,a=smove["pose"][6],v=smove["pose"][7],r=smove["pose"][9])
                 #time.sleep(0.2)
 
             #doesnt seem to work:
-            #robot.movel_waypoints(moves)
+            robot.movel_waypoints(moves)
 
             # old version
             # for smove in moves:

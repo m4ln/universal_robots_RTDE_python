@@ -10,6 +10,8 @@ License: GPL v3 https://www.gnu.org/licenses/gpl-3.0.en.html
 
 """
 import os
+import sys
+sys.path.append("..")
 
 import URBasic
 import math
@@ -290,7 +292,7 @@ def set_lookorigin():
 """LOOP _____________________________________________________________________"""
 
 # remove the folder 'ur_log' and its content
-remove_folder(log_folder)
+#remove_folder(log_folder)
 
 # initialise robot with URBasic
 print("initialising robot")
