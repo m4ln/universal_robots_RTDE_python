@@ -135,7 +135,7 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
     with open(path, "r") as file:
         for line in file:
             if 'URBasic_realTimeClientEvent - ERROR - SendProgram: Program Stopped but not finiched!!!' in line:
-                print("Program Stopped but not finished!!!")
+                print("Program Stopped but not finished")
                 # write the actual tcp position to the logfile
                 tcp_pos = robot.get_actual_tcp_pose()
                 logfile.write(

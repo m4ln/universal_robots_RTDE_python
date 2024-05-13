@@ -22,6 +22,8 @@ from typing import List, Any
 import threading
 import _thread
 import json
+import tkinter as tk
+from tkinter import ttk, filedialog
 
 from config_ur import ROBOT_HOST, ACCELERATION, VELOCITY, ROBOT_START_POS
 from config_osc import OSC_HOST, OSC_PORT
@@ -207,8 +209,8 @@ def on_press(key):
             #pose_values.append(t)
             #pose_values.append(r)
 
-            #pose_values["v"] = v
-            #pose_values["a"] = a
+            pose_values["v"] = v
+            pose_values["a"] = a
             pose_values["t"] = t
             pose_values["r"] = r
 
