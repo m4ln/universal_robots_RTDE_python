@@ -50,7 +50,6 @@ def init_robot():
     # initialise robot with URBasic
     print("initialising robot")
 
-
     robot.reset_error()
     print("robot initialised")
     time.sleep(1)
@@ -138,8 +137,8 @@ def clear_table():
 
 def configure_canvas():
     table_frame.update_idletasks()
-    canvas.config(scrollregion=canvas.bbox("all"))
-    canvas.configure(scrollregion=canvas.bbox("all"))
+    canvas.config(scrollregion=(0,0,800,800))#)canvas.bbox("all")),
+    canvas.configure(scrollregion=(0,0,800,800))#canvas.bbox("all"))
     canvas.configure(yscrollcommand=scrollbar.set)
 
 def on_canvas_configure(event):
@@ -194,6 +193,14 @@ def move_down():
     #still to implement
     pass
 
+def rewind():
+    global moves, robot, json_data
+
+    init_robot()
+
+    reversed_movements = json_data[:current_row+1][::-1]
+    robot.movel_waypoints(reversed_movements)
+
 # Create root window
 root = tk.Tk()
 root.title("Robot Motion Planner")
@@ -216,7 +223,7 @@ table_frame = ttk.Frame(root)
 table_frame.pack(pady=10)
 
 # Create scrollable canvas
-canvas = tk.Canvas(table_frame, height=HEIGHT, width=WIDTH)
+canvas = tk.Canvas(table_frame, height=HEIGHT, width=WIDTH, scrollregion=(0,0,500,500))
 canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
 # Create scrollbar
@@ -272,13 +279,17 @@ replay_button.pack(side=tk.LEFT,pady=5, padx=2)
 move_to_button = ttk.Button(root, text="move to selected pose", command=move_to_pose)
 move_to_button.pack(side=tk.LEFT,pady=5, padx=2)
 
-# move to selected pose
-up_button = ttk.Button(root, text="up", command=move_up)
-up_button.pack(side=tk.LEFT,pady=5, padx=2)
+# rewind
+rewind_button = ttk.Button(root, text="rewind from selected", command=rewind)
+rewind_button.pack(side=tk.LEFT,pady=5, padx=2)
 
-# move to selected pose
-down_button = ttk.Button(root, text="down", command=move_down)
-down_button.pack(side=tk.LEFT,pady=5, padx=2)
+# # move to selected pose
+# up_button = ttk.Button(root, text="up", command=move_up)
+# up_button.pack(side=tk.LEFT,pady=5, padx=2)
+
+# # move to selected pose
+# down_button = ttk.Button(root, text="down", command=move_down)
+# down_button.pack(side=tk.LEFT,pady=5, padx=2)
 
 
 
