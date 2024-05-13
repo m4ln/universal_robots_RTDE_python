@@ -148,7 +148,6 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
                         f"{'target:'}{target_x}, {target_y}, {target_z}, {target_roll}, {target_pitch}, {target_yaw}\n")
                     stop_server()
                     exit()
-                    # sys.exit()
 
     print("New pose = " + str(new_setp))
     prev_osc_arguments = [target_x, target_y, target_z, target_roll,
