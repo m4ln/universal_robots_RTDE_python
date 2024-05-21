@@ -200,6 +200,11 @@ def home3():
     joints = [ 0.73322874, -0.30509599, -1.83537686, -1.23113926,  1.64226055, 13.76494969]
     robot.movej(q=joints, t=5)
 
+def change_speed(speed):
+    if speed != 0:
+        print("changing speed by a factor of {}".format(speed))
+        for position_data in moves:
+            position_data['timestamp'] /= speed
 
 # Create root window
 root = tk.Tk()
@@ -253,6 +258,18 @@ home_button3.pack(side=tk.TOP, pady=5, padx=2)
 
 replay_performance = ttk.Button(root, text="Replay Performance Folder", command=replay_folder)
 replay_performance.pack(side=tk.TOP, pady=5, padx=2)
+
+speed_var = tk.DoubleVar()
+speed_entry = tk.Entry(root, textvariable=speed_var)
+speed_entry.pack(side=tk.TOP, pady=5, padx=2)
+
+speedchange = ttk.Button(root, text="Change Speed", command=lambda: change_speed(speed_var.get()))
+speedchange.pack(side=tk.TOP, pady=5, padx=2)
+
+
+
+slowdown = ttk.Button(root, text="Replay Performance Folder", command=replay_folder)
+slowdown.pack(side=tk.TOP, pady=5, padx=2)
 
 # Run the GUI main loop
 root.mainloop()
