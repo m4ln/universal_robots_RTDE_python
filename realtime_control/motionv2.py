@@ -2,14 +2,11 @@ import os
 import sys
 sys.path.append("..")
 import URBasic
-import math
 import time
 import math3d as m3d
 from pythonosc import dispatcher
 from pythonosc import osc_server
 from typing import List, Any
-import threading
-import _thread
 import json
 import tkinter as tk
 from tkinter import ttk, filedialog
@@ -21,20 +18,14 @@ from pynput.keyboard import Key, Listener
 
 moves = []
 pose_counter = 1
-prev_osc_arguments = [0, 0, 0, 0, 0, 0]
 
-HEIGHT = 500
+HEIGHT = 900
 WIDTH = 600
-
 json_data = {}
-
 current_row = 0
 
-
-robotModel = URBasic.robotModel.RobotModel()
-robot = URBasic.urScriptExt.UrScriptExt(host=ROBOT_HOST, robotModel=robotModel)
-
-
+#robotModel = URBasic.robotModel.RobotModel()
+#robot = URBasic.urScriptExt.UrScriptExt(host=ROBOT_HOST, robotModel=robotModel)
 
 def save_waypoints(moves, filename):
     with open(filename, 'w') as file:
@@ -52,10 +43,10 @@ def init_robot():
 
     robot.reset_error()
     print("robot initialised")
-    time.sleep(.1)
+    time.sleep(1)
 
     robot.init_realtime_control()  # starts the realtime control loop on the Universal-Robot Controller
-    time.sleep(.1)  # just a short wait to make sure everything is initialised
+    time.sleep(1)  # just a short wait to make sure everything is initialised
 
 def set_freedrive():
     global robot
@@ -73,8 +64,7 @@ def replay():
 def get_current_position():
     global robot
     
-    # position = robot.get_actual_tcp_pose()
-    position = robot.get_actual_joint_positions()
+    position = robot.get_actual_tcp_pose()
     return position
 
 def load_json(filename):
@@ -90,13 +80,10 @@ def save_json(filename, data):
         json.dump(data, file, indent=4)
 
 def update_entry(row, column, value):
-    global headers, json_data, current_row
+    global headers, json_data
 
-    #pass
-
-    if column in [1, 2, 3, 4, 5]:  # Check if the column is for "a", "v", "t", or "comment"
-        json_data[row][headers[column]] = value
-        current_row = row
+    if column in [1, 2, 3, 4, 5]:
+        json_data[row][headers[column - 1]] = value
     else:
         # Handle other columns here, if needed
         pass
@@ -110,18 +97,13 @@ def save_changes():
 def populate_table():
     global json_data, headers
 
-    for i, item in enumerate(json_data):
-        row_style = ""
-        if i == current_row:
-            row_style = "selected.TEntry"
-        for j in range(len(headers)):
-            entry = ttk.Entry(table_frame, width=15,style=row_style)
-            entry.insert(0, str(item.get(headers[j], "")))
-            entry.grid(row=i, column=j, padx=5, pady=5)
-            entry.bind('<FocusOut>', lambda event, row=i, column=j: update_entry(row=row, column=column, value=entry.get()))
+    # Clear existing table data
+    table.delete(*table.get_children())
 
-            # Use default argument in lambda function
-            entry.bind('<FocusOut>', lambda event, row=i, column=j, entry=entry: update_entry(row, column, entry.get()))
+    # Populate table with data
+    for i, item in enumerate(json_data):
+        values = [str(item.get(header, "")) for header in headers]
+        table.insert("", "end", values=values)
 
 def open_file_dialog():
     global json_data
@@ -136,8 +118,10 @@ def open_file_dialog():
         configure_canvas()
 
 def clear_table():
-    for child in table_frame.winfo_children():
-        child.destroy()
+    #for child in table_frame.winfo_children():
+     #   child.destroy()x
+
+     return
 
 def configure_canvas():
     table_frame.update_idletasks()
@@ -158,30 +142,16 @@ def create_new_file():
         configure_canvas()
 
 def add_entry():
-    print("getting pos")
     pos = get_current_position()
-    print(pos)
+    new_entry = {
+        "pose": pos.tolist(),
+        "t": 2.0,
+        "r": 0.0015,
+        "comments": ""
+    }
 
-    new_entry = {}
-    new_entry["pose"] = pos.tolist()
-    a = 1.1
-    v = 1.1
-    t = 3.0
-    r = 0.001
-
-    new_entry["v"] = v
-    new_entry["a"] = a
-    new_entry["t"] = t
-    new_entry["r"] = r
-
-    print(new_entry)
-
-    #json_data.append(new_entry)
-    json_data.insert(current_row+1, new_entry)
-    clear_table()
+    json_data.append(new_entry)
     populate_table()
-    configure_canvas()
-    ++current_row
 
 def move_to_pose():
     global current_row
@@ -203,15 +173,8 @@ def rewind():
 
     init_robot()
 
-    #reversed_movements = json_data[:current_row+1][::-1]
-    reversed_movements = [item.copy() for item in json_data[:current_row+1][::-1]]
-
-
-    for item in reversed_movements:
-        item['t'] = 3    
-    
-    print(reversed_movements)
-    robot.movej_waypoints(reversed_movements)
+    reversed_movements = json_data[:current_row+1][::-1]
+    robot.movel_waypoints(reversed_movements)
 
 # Create root window
 root = tk.Tk()
@@ -228,7 +191,6 @@ headers = ["pose", "t", "r", "comments"]
 for j, header in enumerate(headers):
     label = ttk.Label(headers_frame, text=header, width=15, anchor="center")
     label.grid(row=0, column=j, padx=5, pady=5)
-
 
 # Create table frame
 table_frame = ttk.Frame(root)
@@ -254,17 +216,9 @@ canvas.create_window((0, 0), window=table, anchor='nw')
 canvas.configure(yscrollcommand=scrollbar.set)
 scrollbar.configure(command=canvas.yview)
 
-style = ttk.Style()
-style.configure("selected.TEntry", background="lightgray")
-
 # Create table
-#table = ttk.Treeview(canvas, columns=headers, show="headings")
-
-# Set column headings
-#for header in headers:
-  #  table.heading(header, text=header)
-
-##table.pack()
+table = ttk.Treeview(canvas, columns=headers, show="headings")
+table.pack()
 
 # Create New File button
 new_button = ttk.Button(root, text="New File", command=create_new_file)
@@ -298,22 +252,12 @@ move_to_button.pack(side=tk.LEFT,pady=5, padx=2)
 rewind_button = ttk.Button(root, text="rewind from selected", command=rewind)
 rewind_button.pack(side=tk.LEFT,pady=5, padx=2)
 
-# # move to selected pose
-# up_button = ttk.Button(root, text="up", command=move_up)
-# up_button.pack(side=tk.LEFT,pady=5, padx=2)
-
-# # move to selected pose
-# down_button = ttk.Button(root, text="down", command=move_down)
-# down_button.pack(side=tk.LEFT,pady=5, padx=2)
-
-
-
 def delete_entry():
     global table
 
     #selected_rows = dt.get_rows(selected=True)
     selected_entry = current_row #table.get_rows(selected=True)
-    if selected_entry > -1:
+    if selected_entry:
         #index = int(selected_entry.lstrip("I00"))  # Extract the row index from the entry ID
         del json_data[current_row]
         clear_table()
@@ -324,13 +268,5 @@ def delete_entry():
 delete = ttk.Button(root, text="delete", command=delete_entry)
 delete.pack(side=tk.LEFT,pady=5, padx=2)
 
-
 # Start the main loop
 root.mainloop()
-
-
-
-
-
-
-
