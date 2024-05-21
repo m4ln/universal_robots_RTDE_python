@@ -267,9 +267,5 @@ speedchange = ttk.Button(root, text="Change Speed", command=lambda: change_speed
 speedchange.pack(side=tk.TOP, pady=5, padx=2)
 
 
-
-slowdown = ttk.Button(root, text="Replay Performance Folder", command=replay_folder)
-slowdown.pack(side=tk.TOP, pady=5, padx=2)
-
 # Run the GUI main loop
 root.mainloop()
