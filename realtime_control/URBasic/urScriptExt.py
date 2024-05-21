@@ -620,24 +620,31 @@ end
 
     def movej_waypoints(self, waypoints, wait=True):
         '''
-        Movej along multiple waypoints. By configuring a blend radius continuous movements can be enabled.
+        Movel along multiple waypoints. By configuring a blend radius continuous movements can be enabled.
 
         Parameters:
         waypoints: List waypoint dictionaries {pose: [6d], a, v, t, r}
         '''
 
-        prg = '''def move_waypoints():
-{exec_str}
-end
-'''
         exec_str = ""
         for waypoint in waypoints:
-            movestr = self._move(movetype='j', **waypoint)
+            #movestr = self._move(movetype='l', **waypoint)
+            movestr = self._move(movetype='j', q=waypoint["pose"], t=waypoint["t"], r=waypoint["r"])
+
             exec_str += movestr + "\n"
+
+        prg = "def move_waypoints():\n"
+        prg += exec_str;
+        prg += "end\n"
+        prg += "move_waypoints()\n"
+
 
         programString = prg.format(**locals())
 
+        print(programString)
+
         self.robotConnector.RealTimeClient.SendProgram(programString)
+        time.sleep(0.5)
         if (wait):
             self.waitRobotIdleOrStopFlag()
 
@@ -652,7 +659,7 @@ end
         exec_str = ""
         for waypoint in waypoints:
             #movestr = self._move(movetype='l', **waypoint)
-            movestr = self._move(movetype='l', pose=waypoint["pose"], t=waypoint["t"], r=waypoint["r"])
+            movestr = self._move(movetype='l', q=waypoint["pose"], t=waypoint["t"], r=waypoint["r"])
 
             exec_str += movestr + "\n"
 

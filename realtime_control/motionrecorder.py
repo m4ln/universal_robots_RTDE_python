@@ -159,7 +159,10 @@ prev_osc_arguments = [0, 0, 0, 0, 0, 0]
 
 
 def get_current_position():
-    position = robot.get_actual_tcp_pose()
+    #position = robot.get_actual_tcp_pose()
+    
+    # switched to joint positions to avoid ambiguous moves 
+    position = robot.get_actual_joint_positions()
     return position
 
 # a_list = []
