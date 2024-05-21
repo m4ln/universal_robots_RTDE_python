@@ -5,6 +5,7 @@ import time
 import URBasic
 import math
 import json
+import os
 
 from config_ur import ROBOT_HOST, ACCELERATION, VELOCITY, ROBOT_START_POS
 from config_osc import OSC_HOST, OSC_PORT
@@ -99,6 +100,7 @@ def replay_robot_positions(robot_positions):
         print("No robot positions to replay.")
         return
 
+    init_robot()
     last_time = time.time() #robot_positions[0]['timestamp']
 
     for position_data in robot_positions:
@@ -156,6 +158,47 @@ def clear():
     global moves
     moves = []
 
+def replay_folder(directory_path="performance"):
+    global moves
+    moves = []
+    print("replay the whole performance folder")
+    init_robot()
+        # Get the directory of the current script
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Construct the path to the "performance" directory
+    performance_dir = os.path.join(script_dir, 'performance')
+    
+    # Sort the filenames in the directory
+    filenames = sorted(os.listdir(directory_path))
+    
+    for filename in filenames:
+        if filename.endswith('.json'):
+            file_path = os.path.join(performance_dir, filename)
+            with open(file_path) as file:
+                data = json.load(file)
+                moves.extend(data)
+    
+    #return moves
+    
+    replay_robot_positions(moves)
+
+def home1():
+    print(robot.get_actual_joint_positions())
+    #joints = [-1.49995485e-03, -1.84361376e+00, -4.27633047e-01, -9.55459194e-01, 1.55824673e+00,  1.41437389e+01]
+    joints = [-1.85186068e-03, -8.55259435e-01, -1.33400774e+00, -1.02435590e+00,
+  1.60649371e+00,  1.41792606e+01]
+    robot.movej(q=joints, t=5)
+
+def home2():
+    print(robot.get_actual_joint_positions())
+    joints = [-0.52981788, -1.12756066, -1.77152109, -0.42770417,  1.608863,   14.59378231] #robot.movej(q=joints, t=5)
+    robot.movej(q=joints, t=5)
+
+def home3():
+    print(robot.get_actual_joint_positions())
+    joints = [ 0.73322874, -0.30509599, -1.83537686, -1.23113926,  1.64226055, 13.76494969]
+    robot.movej(q=joints, t=5)
 
 
 # Create root window
@@ -168,35 +211,48 @@ headers_frame.pack()
 
 # Create New File button
 new_button = ttk.Button(root, text="New File", command=create_new_file)
-new_button.pack(side=tk.LEFT,pady=5, padx=2)
+new_button.pack(side=tk.TOP,pady=5, padx=2)
 
 
 # Create Open File button
 open_button = ttk.Button(root, text="Open File", command=open_file_dialog)
-open_button.pack(side=tk.LEFT,pady=5, padx=2)
+open_button.pack(side=tk.TOP,pady=5, padx=2)
 
 # Create Save button
 save_button = ttk.Button(root, text="Save Changes", command=save_changes)
-save_button.pack(side=tk.LEFT,pady=5, padx=2)
+save_button.pack(side=tk.TOP,pady=5, padx=2)
 
 # Create buttons
 freedrive_button = ttk.Button(root, text="Freedrive Mode", command=set_freedrive)
-freedrive_button.pack(side=tk.LEFT,pady=5, padx=2)
+freedrive_button.pack(side=tk.TOP,pady=5, padx=2)
 
-start_recording_button = ttk.Button(headers_frame, text="Start Recording", command=start_recording)
-start_recording_button.pack(side=tk.LEFT, padx=10)
+start_recording_button = ttk.Button(root, text="Start Recording", command=start_recording)
+start_recording_button.pack(side=tk.TOP, pady=5, padx=2)
 
-stop_recording_button = ttk.Button(headers_frame, text="Stop Recording", command=stop_recording)
-stop_recording_button.pack(side=tk.LEFT, padx=10)
+stop_recording_button = ttk.Button(root, text="Stop Recording", command=stop_recording)
+stop_recording_button.pack(side=tk.TOP, pady=5, padx=2)
 
-normalmode_button = ttk.Button(root, text="Normal Mode", command=init_robot)
-normalmode_button.pack(side=tk.LEFT,pady=5, padx=2)
+#normalmode_button = ttk.Button(root, text="Normal Mode", command=init_robot)
+#normalmode_button.pack(side=tk.TOP,pady=5, padx=2)
 
-replay_positions_button = ttk.Button(headers_frame, text="Replay Robot Positions", command=lambda: replay_robot_positions(moves))
-replay_positions_button.pack(side=tk.LEFT, padx=10)
+replay_positions_button = ttk.Button(root, text="Replay Single Movement", command=lambda: replay_robot_positions(moves))
+replay_positions_button.pack(side=tk.TOP, pady=5, padx=2)
 
-clear_positions = ttk.Button(headers_frame, text="clear", command=lambda: clear)
-clear_positions.pack(side=tk.LEFT, padx=10)
+clear_positions = ttk.Button(root, text="Clear", command=clear)
+clear_positions.pack(side=tk.TOP, pady=5, padx=2)
+
+
+home_button1 = ttk.Button(root, text="Home 1", command=home1)
+home_button1.pack(side=tk.TOP, pady=5, padx=2)
+
+home_button2 = ttk.Button(root, text="Home 2", command=home2)
+home_button2.pack(side=tk.TOP, pady=5, padx=2)
+
+home_button3 = ttk.Button(root, text="Home 3", command=home3)
+home_button3.pack(side=tk.TOP, pady=5, padx=2)
+
+replay_performance = ttk.Button(root, text="Replay Performance Folder", command=replay_folder)
+replay_performance.pack(side=tk.TOP, pady=5, padx=2)
 
 # Run the GUI main loop
 root.mainloop()

@@ -188,7 +188,7 @@ def move_to_pose():
     init_robot()
 
     print(json_data)
-    robot.movel(pose=json_data[current_row]["pose"],t=3)
+    robot.movel(q=json_data[current_row]["pose"],t=3)
 
 def move_up():
     #still to implement
