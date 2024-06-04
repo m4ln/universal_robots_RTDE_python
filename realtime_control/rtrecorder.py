@@ -227,7 +227,7 @@ def change_speed_folder(speed, directory="performance"):
 
             # Modify the timestamps
             for entry in data:
-                entry['timestamp'] *= speed
+                entry['timestamp'] /= speed
 
             # Write the modified data back to the file
             with open(file_path, 'w') as file:
