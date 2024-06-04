@@ -20,8 +20,8 @@ json_data = {}
 recording_flag = False
 recording_thread = None
 
-robotModel = URBasic.robotModel.RobotModel()
-robot = URBasic.urScriptExt.UrScriptExt(host=ROBOT_HOST, robotModel=robotModel)
+#robotModel = URBasic.robotModel.RobotModel()
+#robot = URBasic.urScriptExt.UrScriptExt(host=ROBOT_HOST, robotModel=robotModel)
 
 def create_new_file():
     global json_data, json_filename
@@ -206,6 +206,35 @@ def change_speed(speed):
         for position_data in moves:
             position_data['timestamp'] /= speed
 
+def change_speed_folder(speed, directory="performance"):
+    if speed == 0:
+        return
+
+    # Get the directory of the current script
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Construct the path to the specified directory
+    directory_path = os.path.join(script_dir, directory)
+
+    # Sort the filenames in the directory
+    filenames = sorted(os.listdir(directory_path))
+
+    for filename in filenames:
+        if filename.endswith('.json'):
+            file_path = os.path.join(directory_path, filename)
+            with open(file_path, 'r') as file:
+                data = json.load(file)
+
+            # Modify the timestamps
+            for entry in data:
+                entry['timestamp'] *= speed
+
+            # Write the modified data back to the file
+            with open(file_path, 'w') as file:
+                json.dump(data, file, indent=4)
+
+    print(f"Timestamps modified by a factor of {speed} in all JSON files in the '{directory}' directory.")
+
 # Create root window
 root = tk.Tk()
 root.title("Robot Motion Planner")
@@ -263,8 +292,11 @@ speed_var = tk.DoubleVar()
 speed_entry = tk.Entry(root, textvariable=speed_var)
 speed_entry.pack(side=tk.TOP, pady=5, padx=2)
 
-speedchange = ttk.Button(root, text="Change Speed", command=lambda: change_speed(speed_var.get()))
+speedchange = ttk.Button(root, text="Change Speed of active recording", command=lambda: change_speed(speed_var.get()))
 speedchange.pack(side=tk.TOP, pady=5, padx=2)
+
+speedchange_folder = ttk.Button(root, text="Change Speed for performance folder", command=lambda: change_speed_folder(speed_var.get()))
+speedchange_folder.pack(side=tk.TOP, pady=5, padx=2)
 
 
 # Run the GUI main loop
