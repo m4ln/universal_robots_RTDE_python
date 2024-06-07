@@ -160,15 +160,17 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
 
     # consider offsets
 
-    target_x += x_offset
-    target_y += y_offset
-    target_z += z_offset
+    #target_x += x_offset.get()
+    #target_y += y_offset.get()
+    #target_z += z_offset.get()
 
 
     # convert from mm to m
     target_x /= 1000
     target_y /= 1000
     target_z /= 1000
+
+
 
     # check if target_x, target_y, target_z are in the range between min and max
     # if target_x < min_x or target_x > max_x:
@@ -192,6 +194,8 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
 
     if debug:
         print('OSC message:', osc_arguments)
+
+    #return
 
     new_setp = [target_x, target_y, target_z, target_roll, target_pitch,
                 target_yaw]
@@ -327,6 +331,25 @@ server = osc_server.BlockingOSCUDPServer(
 print("Serving on {}".format(server.server_address))
 
 keep_running = True
+
+try:
+    # Create a new thread for the OSC server
+    server_thread = threading.Thread(target=server.serve_forever)
+    # Start the thread
+    server_thread.start()
+
+    while keep_running:
+        time.sleep(1)  # Sleep for a while to reduce CPU usage
+
+    close_all(server, logfile, robot)
+
+except KeyboardInterrupt:
+    print("closing robot connection")
+    close_all(server, logfile, robot)
+    exit()
+except:
+    close_all(server, logfile, robot)
+    exit()
 
 
 root.mainloop()
