@@ -354,6 +354,8 @@ print("Serving on {}".format(server.server_address))
 
 keep_running = True
 
+root.mainloop()
+
 try:
     # Create a new thread for the OSC server
     server_thread = threading.Thread(target=server.serve_forever)
@@ -374,4 +376,3 @@ except:
     exit()
 
 
-root.mainloop()
