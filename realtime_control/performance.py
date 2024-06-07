@@ -21,7 +21,6 @@ import tkinter as tk
 from tkinter import ttk, filedialog
 from async_tkinter_loop import async_handler, async_mainloop
 
-global robot
 
 moves = []
 json_data = {}
@@ -31,6 +30,9 @@ debug = True
 headers_label = None
 status_label = None
 
+robotModel = URBasic.robotModel.RobotModel()
+robot = URBasic.urScriptExt.UrScriptExt(host=ROBOT_HOST, robotModel=robotModel)
+
 # Define a variable to keep track of the current mode
 current_mode = "idle"
 
@@ -38,8 +40,8 @@ current_mode = "idle"
 #y_offset = tk.StringVar()
 #z_offset = tk.StringVar()
 
-def init_robot():
-    global robot
+def init_robot(robot):
+    #global robot
     # initialise robot with URBasic
     print("initialising robot")
 
@@ -50,13 +52,13 @@ def init_robot():
     robot.init_realtime_control()  # starts the realtime control loop on the Universal-Robot Controller
     time.sleep(.1)  # just a short wait to make sure everything is initialised
 
-def set_freedrive():
-    global robot
+def set_freedrive(robot):
+    #global robot
 
-    init_robot()
+    init_robot(robot)
     robot.freedrive_mode()
 
-def replay_robot_positions(robot_positions):
+def replay_robot_positions(robot_positions, robot):
     """
     Replays the robot positions stored in the `robot_positions` list.
 
@@ -71,7 +73,7 @@ def replay_robot_positions(robot_positions):
         print("No robot positions to replay.")
         return
 
-    init_robot()
+    init_robot(robot)
     last_time = time.time() #robot_positions[0]['timestamp']
 
     for position_data in robot_positions:
@@ -91,11 +93,11 @@ def replay_robot_positions(robot_positions):
         if delay > 0:
             time.sleep(delay)
 
-def replay_folder(directory_path="performance"):
+def replay_folder(robot, directory_path="performance"):
     global moves
     moves = []
     print("replay the whole performance folder")
-    init_robot()
+    init_robot(robot)
         # Get the directory of the current script
     script_dir = os.path.dirname(os.path.abspath(__file__))
     
@@ -140,14 +142,13 @@ def stop_server():
     keep_running = False
 
 
-def close_all(server, logfile, robot):
+def close_all(server, robot):
     server.shutdown()
     server.server_close()
-    logfile.close()
     robot.close()
 
 
-def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
+def move_cartesian(address: str, robot: List[Any], *osc_arguments: List[Any]) -> None:
     """
     Function to move the robot to a new cartesian position
     :param address:
@@ -156,7 +157,7 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
     :return: None
     """
 
-    global speed, acceleration, robot, logfile, prev_osc_arguments, x_offset, z_offset, z_offset, current_mode
+    global speed, acceleration, prev_osc_arguments, x_offset, z_offset, z_offset, current_mode
 
     if(current_mode != "osc"):
         return
@@ -201,8 +202,6 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
     if debug:
         print('OSC message:', osc_arguments)
 
-    return
-
     new_setp = [target_x, target_y, target_z, target_roll, target_pitch,
                 target_yaw]
 
@@ -213,7 +212,7 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
                           target_pitch, target_yaw]
 
 
-def switch_mode(mode):
+def switch_mode(robot, mode):
     global current_mode, headers_label, idle_button, playback_button, touchdesigner_button, headers_label, status_label
     if mode == "idle":
         current_mode = "idle"
@@ -223,14 +222,14 @@ def switch_mode(mode):
        # playback_button.configure(background="#fcd0a1", foreground="black", activebackground="#fbba7c", activeforeground="black")
        # touchdesigner_button.configure(background="#a8d8b9", foreground="black", activebackground="#91c8a2", activeforeground="black")
 
-        set_freedrive()
+        set_freedrive(robot)
     
     elif mode == "playback":
         current_mode = "playback"
         root.configure(background="#fcd0a1")
         headers_label.configure(text="PLAYBACK", background="#fcd0a1", foreground="black", font=("Arial", 20))
 
-        replay_folder()
+        replay_folder(robot)
         #idle_button.configure()
        # idle_button.configure(background="#f07c7c", foreground="white", activebackground="#e86464", activeforeground="white")
        # playback_button.configure(background="#fcd0a1", foreground="black", activebackground="#fbba7c", activeforeground="black")
@@ -268,7 +267,7 @@ root.wm_attributes("-topmost", 1)
 # Set up the OSC server
 dispatcher = Dispatcher()
 # dispatcher.map("/position", print_osc)
-dispatcher.map("/position", move_cartesian)
+dispatcher.map("/position", move_cartesian, robot)
 
 #switch_mode("")
 
@@ -340,8 +339,6 @@ async def init_main():
     style.map("TButton", background=[("active", "#e86464"), ("pressed", "#e86464")], foreground=[("active", "white"), ("pressed", "white")])
 
     switch_mode("idle")
-    robotModel = URBasic.robotModel.RobotModel()
-    robot = URBasic.urScriptExt.UrScriptExt(host=ROBOT_HOST, robotModel=robotModel)
 
     await async_mainloop(root)  # Enter main loop of program
 
