@@ -21,6 +21,8 @@ import tkinter as tk
 from tkinter import ttk, filedialog
 from async_tkinter_loop import async_handler, async_mainloop
 
+global robot
+
 moves = []
 json_data = {}
 
