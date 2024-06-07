@@ -280,7 +280,7 @@ async def async_mainloop(root):
 
 
 async def init_main():
-    global headers_label, status_label
+    global headers_label, status_label, robot
 
     """Initialize the asynchronous OSC server and Tkinter GUI"""
     server = AsyncIOOSCUDPServer((OSC_HOST, OSC_PORT), dispatcher, asyncio.get_event_loop())
