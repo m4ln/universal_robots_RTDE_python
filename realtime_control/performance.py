@@ -2,8 +2,11 @@ import sys
 sys.path.append("..")
 import threading
 import time
-from pythonosc import dispatcher
-from pythonosc import osc_server
+#from pythonosc import dispatcher
+#from pythonosc import osc_server
+from pythonosc.osc_server import AsyncIOOSCUDPServer
+from pythonosc.dispatcher import Dispatcher
+import asyncio
 from typing import List, Any
 import threading
 import URBasic
@@ -16,11 +19,15 @@ from config_osc import OSC_HOST, OSC_PORT
 
 import tkinter as tk
 from tkinter import ttk, filedialog
+from async_tkinter_loop import async_handler, async_mainloop
 
 moves = []
 json_data = {}
 
 debug = True
+
+headers_label = None
+status_label = None
 
 # Define a variable to keep track of the current mode
 current_mode = "idle"
@@ -69,9 +76,9 @@ def replay_robot_positions(robot_positions):
         timestamp = position_data['timestamp']
         position = position_data['position']
 
-        position[0] += x_offset.get() / 1000
-        position[1] += y_offset.get() / 1000
-        position[2] += z_offset.get() / 1000
+        position[0] += x_offset / 1000
+        position[1] += y_offset / 1000
+        position[2] += z_offset / 1000
 
         # Set the robot's pose using the stored joint positions
         robot.set_realtime_pose(position)
@@ -107,27 +114,6 @@ def replay_folder(directory_path="performance"):
     
     replay_robot_positions(moves)
 
-def start_drawing():
-    global keep_running, server, robot
-    try:
-        # Create a new thread for the OSC server
-        server_thread = threading.Thread(target=server.serve_forever)
-        # Start the thread
-        server_thread.start()
-
-        while keep_running:
-            time.sleep(1)  # Sleep for a while to reduce CPU usage
-
-        close_all(server, robot)
-
-    except KeyboardInterrupt:
-        print("closing robot connection")
-        close_all(server, robot)
-        exit()
-    except:
-        close_all(server, robot)
-        exit()
-
 def sum_timestamps_in_directory(directory_path="performance"):
     total_timestamps = 0
 
@@ -152,9 +138,10 @@ def stop_server():
     keep_running = False
 
 
-def close_all(server, robot):
+def close_all(server, logfile, robot):
     server.shutdown()
     server.server_close()
+    logfile.close()
     robot.close()
 
 
@@ -172,8 +159,6 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
     if(current_mode != "osc"):
         return
 
-    print(f"{address}: {osc_arguments}")
-
     # make sure the osc_arguments are in float format
     # store osc_arguments in float variables
     target_x = float(osc_arguments[0])
@@ -186,13 +171,10 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
     #target_y += y_offset.get()
     #target_z += z_offset.get()
 
-
     # convert from mm to m
     target_x /= 1000
     target_y /= 1000
     target_z /= 1000
-
-
 
     # check if target_x, target_y, target_z are in the range between min and max
     # if target_x < min_x or target_x > max_x:
@@ -217,7 +199,7 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
     if debug:
         print('OSC message:', osc_arguments)
 
-    #return
+    return
 
     new_setp = [target_x, target_y, target_z, target_roll, target_pitch,
                 target_yaw]
@@ -230,7 +212,7 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
 
 
 def switch_mode(mode):
-    global current_mode, headers_label, idle_button, playback_button, touchdesigner_button
+    global current_mode, headers_label, idle_button, playback_button, touchdesigner_button, headers_label, status_label
     if mode == "idle":
         current_mode = "idle"
         root.configure(background="#f07c7c")
@@ -239,7 +221,7 @@ def switch_mode(mode):
        # playback_button.configure(background="#fcd0a1", foreground="black", activebackground="#fbba7c", activeforeground="black")
        # touchdesigner_button.configure(background="#a8d8b9", foreground="black", activebackground="#91c8a2", activeforeground="black")
 
-    #    set_freedrive()
+        set_freedrive()
     
     elif mode == "playback":
         current_mode = "playback"
@@ -257,7 +239,7 @@ def switch_mode(mode):
         headers_label.configure(text="OSC", background="#a8d8b9", foreground="black", font=("Arial", 20))
 
         #start osc server
-        start_drawing()
+
 
 
        # idle_button.configure(background="#f07c7c", foreground="white", activebackground="#e86464", activeforeground="white")
@@ -267,7 +249,6 @@ def switch_mode(mode):
 
 total_duration = sum_timestamps_in_directory()
 print(total_duration)
-
 
 # GUI
 
@@ -282,96 +263,101 @@ root.resizable(False, False)
 # Make the window always on top
 root.wm_attributes("-topmost", 1)
 
-# Create headers frame
-headers_frame = ttk.Frame(root)
-headers_frame.pack()
-
-# Create header label
-headers_label = ttk.Label(headers_frame, text="IDLE MODE", font=("Arial", 20))
-headers_label.pack(side=tk.TOP, padx=10, pady=10)
-
-status_text = "performance of {:.2f}s duration loaded".format(total_duration)
-status_label = ttk.Label(headers_frame, text=status_text, font=("Arial", 10))
-status_label.pack(side=tk.TOP, padx=10, pady=10)
-
-# Create mode buttons
-idle_button = ttk.Button(root, text="Idle", command=lambda: switch_mode("idle"))
-idle_button.pack(side=tk.TOP, pady=5, padx=2)
-
-playback_button = ttk.Button(root, text="Playback", command=lambda: switch_mode("playback"))
-playback_button.pack(side=tk.TOP, pady=5, padx=2)
-
-touchdesigner_button = ttk.Button(root, text="OSC", command=lambda: switch_mode("osc"))
-touchdesigner_button.pack(side=tk.TOP, pady=5, padx=2)
-
-# Create input fields frame
-input_frame = ttk.Frame(root)
-input_frame.pack()
-
-x_offset = tk.DoubleVar()
-y_offset = tk.DoubleVar()
-z_offset = tk.DoubleVar()
-
-# Create input fields
-x_label = ttk.Label(input_frame, text="X-Offset:", background=root.cget("background"), foreground="white")
-x_label.pack(side=tk.TOP, padx=(10, 5))
-x_entry = ttk.Entry(input_frame, textvariable=x_offset, width=3)
-x_entry.pack(padx=5)
-
-y_label = ttk.Label(input_frame, text="Y-Offset:", background=root.cget("background"), foreground="white")
-y_label.pack(side=tk.TOP, padx=5)
-y_entry = ttk.Entry(input_frame, textvariable=y_offset, width=3)
-y_entry.pack(side=tk.TOP, padx=5)
-
-z_label = ttk.Label(input_frame, text="Z-Offset:", background=root.cget("background"), foreground="white")
-z_label.pack(side=tk.TOP, padx=5)
-z_entry = ttk.Entry(input_frame, textvariable=z_offset, width=3)
-z_entry.pack(side=tk.TOP, padx=(5, 10))
-
-# Set the button style
-style = ttk.Style()
-style.configure("TButton", relief="flat", padding=5)
-style.map("TButton", background=[("active", "#e86464"), ("pressed", "#e86464")], foreground=[("active", "white"), ("pressed", "white")])
-
-
-robotModel = URBasic.robotModel.RobotModel()
-robot = URBasic.urScriptExt.UrScriptExt(host=ROBOT_HOST, robotModel=robotModel)
-
-
-switch_mode("idle")
-
-# Create a flag for running the server
-server_running = threading.Event()
-server_running.set()
-
 # Set up the OSC server
-dispatcher = dispatcher.Dispatcher()
+dispatcher = Dispatcher()
 # dispatcher.map("/position", print_osc)
 dispatcher.map("/position", move_cartesian)
-server = osc_server.BlockingOSCUDPServer(
-    (OSC_HOST, OSC_PORT), dispatcher)
-print("Serving on {}".format(server.server_address))
 
-keep_running = True
-
-try:
-    # Create a new thread for the OSC server
-    server_thread = threading.Thread(target=server.serve_forever)
-    # Start the thread
-    server_thread.start()
-
-    while keep_running:
-        time.sleep(1)  # Sleep for a while to reduce CPU usage
-
-    close_all(server, logfile, robot)
-
-except KeyboardInterrupt:
-    print("closing robot connection")
-    close_all(server, logfile, robot)
-    exit()
-except:
-    close_all(server, logfile, robot)
-    exit()
+#switch_mode("")
 
 
-root.mainloop()
+
+async def async_mainloop(root):
+    """Asynchronous Tkinter event loop"""
+    while True:
+        root.update()
+        await asyncio.sleep(0.001)
+
+
+async def init_main():
+    global headers_label, status_label
+
+    """Initialize the asynchronous OSC server and Tkinter GUI"""
+    server = AsyncIOOSCUDPServer((OSC_HOST, OSC_PORT), dispatcher, asyncio.get_event_loop())
+    transport, protocol = await server.create_serve_endpoint()  # Create datagram endpoint and start serving
+
+    # Create headers frame
+    headers_frame = ttk.Frame(root)
+    headers_frame.pack()
+
+    # Create header label
+    headers_label = ttk.Label(headers_frame, text="IDLE MODE", font=("Arial", 20))
+    headers_label.pack(side=tk.TOP, padx=10, pady=10)
+
+    status_text = "performance of {:.2f}s duration loaded".format(total_duration)
+    status_label = ttk.Label(headers_frame, text=status_text, font=("Arial", 10))
+    status_label.pack(side=tk.TOP, padx=10, pady=10)
+
+    # Create mode buttons
+    idle_button = ttk.Button(root, text="Idle", command=lambda: switch_mode("idle"))
+    idle_button.pack(side=tk.TOP, pady=5, padx=2)
+
+    playback_button = ttk.Button(root, text="Playback", command=lambda: switch_mode("playback"))
+    playback_button.pack(side=tk.TOP, pady=5, padx=2)
+
+    touchdesigner_button = ttk.Button(root, text="OSC", command=lambda: switch_mode("osc"))
+    touchdesigner_button.pack(side=tk.TOP, pady=5, padx=2)
+
+    # Create input fields frame
+    input_frame = ttk.Frame(root)
+    input_frame.pack()
+
+    x_offset = tk.DoubleVar()
+    y_offset = tk.DoubleVar()
+    z_offset = tk.DoubleVar()
+
+    # Create input fields
+    x_label = ttk.Label(input_frame, text="X-Offset:", background=root.cget("background"), foreground="white")
+    x_label.pack(side=tk.TOP, padx=(10, 5))
+    x_entry = ttk.Entry(input_frame, textvariable=x_offset, width=3)
+    x_entry.pack(padx=5)
+
+    y_label = ttk.Label(input_frame, text="Y-Offset:", background=root.cget("background"), foreground="white")
+    y_label.pack(side=tk.TOP, padx=5)
+    y_entry = ttk.Entry(input_frame, textvariable=y_offset, width=3)
+    y_entry.pack(side=tk.TOP, padx=5)
+
+    z_label = ttk.Label(input_frame, text="Z-Offset:", background=root.cget("background"), foreground="white")
+    z_label.pack(side=tk.TOP, padx=5)
+    z_entry = ttk.Entry(input_frame, textvariable=z_offset, width=3)
+    z_entry.pack(side=tk.TOP, padx=(5, 10))
+
+    # Set the button style
+    style = ttk.Style()
+    style.configure("TButton", relief="flat", padding=5)
+    style.map("TButton", background=[("active", "#e86464"), ("pressed", "#e86464")], foreground=[("active", "white"), ("pressed", "white")])
+
+    switch_mode("idle")
+    robotModel = URBasic.robotModel.RobotModel()
+    robot = URBasic.urScriptExt.UrScriptExt(host=ROBOT_HOST, robotModel=robotModel)
+
+    await async_mainloop(root)  # Enter main loop of program
+
+    transport.close()  # Clean up serve endpoint
+
+# Run the asynchronous OSC server and Tkinter GUI
+asyncio.run(init_main())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
