@@ -116,7 +116,7 @@ def replay_folder(robot, directory_path="performance"):
     
     #return moves
     
-    replay_robot_positions(moves)
+    replay_robot_positions(moves, robot)
 
 def sum_timestamps_in_directory(directory_path="performance"):
     total_timestamps = 0
@@ -269,9 +269,6 @@ dispatcher = Dispatcher()
 # dispatcher.map("/position", print_osc)
 dispatcher.map("/position", move_cartesian, robot)
 
-#switch_mode("")
-
-
 
 async def async_mainloop(root):
     """Asynchronous Tkinter event loop"""
@@ -280,8 +277,8 @@ async def async_mainloop(root):
         await asyncio.sleep(0.001)
 
 
-async def init_main():
-    global headers_label, status_label, robot
+async def init_main(robot):
+    global headers_label, status_label
 
     """Initialize the asynchronous OSC server and Tkinter GUI"""
     server = AsyncIOOSCUDPServer((OSC_HOST, OSC_PORT), dispatcher, asyncio.get_event_loop())
@@ -300,13 +297,13 @@ async def init_main():
     status_label.pack(side=tk.TOP, padx=10, pady=10)
 
     # Create mode buttons
-    idle_button = ttk.Button(root, text="Idle", command=lambda: switch_mode("idle"))
+    idle_button = ttk.Button(root, text="Idle", command=lambda: switch_mode(robot,"idle"))
     idle_button.pack(side=tk.TOP, pady=5, padx=2)
 
-    playback_button = ttk.Button(root, text="Playback", command=lambda: switch_mode("playback"))
+    playback_button = ttk.Button(root, text="Playback", command=lambda: switch_mode(robot,"playback"))
     playback_button.pack(side=tk.TOP, pady=5, padx=2)
 
-    touchdesigner_button = ttk.Button(root, text="OSC", command=lambda: switch_mode("osc"))
+    touchdesigner_button = ttk.Button(root, text="OSC", command=lambda: switch_mode(robot,"osc"))
     touchdesigner_button.pack(side=tk.TOP, pady=5, padx=2)
 
     # Create input fields frame
@@ -345,7 +342,7 @@ async def init_main():
     transport.close()  # Clean up serve endpoint
 
 # Run the asynchronous OSC server and Tkinter GUI
-asyncio.run(init_main())
+asyncio.run(init_main(robot))
 
 
 
