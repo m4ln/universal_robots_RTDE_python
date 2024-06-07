@@ -80,9 +80,13 @@ def replay_robot_positions(robot_positions, robot):
         timestamp = position_data['timestamp']
         position = position_data['position']
 
-        position[0] += x_offset / 1000
-        position[1] += y_offset / 1000
-        position[2] += z_offset / 1000
+        # position[0] += x_offset / 1000
+        # position[1] += y_offset / 1000
+        # position[2] += z_offset / 1000
+
+        # position[0] /= 1000
+        # position[1] /= 1000
+        # position[2] /= 1000
 
         # Set the robot's pose using the stored joint positions
         robot.set_realtime_pose(position)
@@ -148,7 +152,7 @@ def close_all(server, robot):
     robot.close()
 
 
-def move_cartesian(address: str, robot: List[Any], *osc_arguments: List[Any]) -> None:
+def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
     """
     Function to move the robot to a new cartesian position
     :param address:
@@ -157,7 +161,7 @@ def move_cartesian(address: str, robot: List[Any], *osc_arguments: List[Any]) ->
     :return: None
     """
 
-    global speed, acceleration, prev_osc_arguments, x_offset, z_offset, z_offset, current_mode
+    global robot, speed, acceleration, prev_osc_arguments, x_offset, z_offset, z_offset, current_mode
 
     if(current_mode != "osc"):
         return
@@ -240,7 +244,7 @@ def switch_mode(robot, mode):
         headers_label.configure(text="OSC", background="#a8d8b9", foreground="black", font=("Arial", 20))
 
         #start osc server
-
+        init_robot(robot)
 
 
        # idle_button.configure(background="#f07c7c", foreground="white", activebackground="#e86464", activeforeground="white")
@@ -267,7 +271,7 @@ root.wm_attributes("-topmost", 1)
 # Set up the OSC server
 dispatcher = Dispatcher()
 # dispatcher.map("/position", print_osc)
-dispatcher.map("/position", move_cartesian, robot)
+dispatcher.map("/position", move_cartesian)
 
 
 async def async_mainloop(root):
@@ -335,7 +339,7 @@ async def init_main(robot):
     style.configure("TButton", relief="flat", padding=5)
     style.map("TButton", background=[("active", "#e86464"), ("pressed", "#e86464")], foreground=[("active", "white"), ("pressed", "white")])
 
-    switch_mode("idle")
+    switch_mode(robot, "idle")
 
     await async_mainloop(root)  # Enter main loop of program
 
