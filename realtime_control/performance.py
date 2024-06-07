@@ -69,9 +69,9 @@ def replay_robot_positions(robot_positions):
         timestamp = position_data['timestamp']
         position = position_data['position']
 
-        position[0] += x_offset / 1000
-        position[1] += y_offset / 1000
-        position[2] += z_offset / 1000
+        position[0] += x_offset.get() / 1000
+        position[1] += y_offset.get() / 1000
+        position[2] += z_offset.get() / 1000
 
         # Set the robot's pose using the stored joint positions
         robot.set_realtime_pose(position)
@@ -107,6 +107,27 @@ def replay_folder(directory_path="performance"):
     
     replay_robot_positions(moves)
 
+def start_drawing():
+    global keep_running, server, robot
+    try:
+        # Create a new thread for the OSC server
+        server_thread = threading.Thread(target=server.serve_forever)
+        # Start the thread
+        server_thread.start()
+
+        while keep_running:
+            time.sleep(1)  # Sleep for a while to reduce CPU usage
+
+        close_all(server, robot)
+
+    except KeyboardInterrupt:
+        print("closing robot connection")
+        close_all(server, robot)
+        exit()
+    except:
+        close_all(server, robot)
+        exit()
+
 def sum_timestamps_in_directory(directory_path="performance"):
     total_timestamps = 0
 
@@ -131,10 +152,9 @@ def stop_server():
     keep_running = False
 
 
-def close_all(server, logfile, robot):
+def close_all(server, robot):
     server.shutdown()
     server.server_close()
-    logfile.close()
     robot.close()
 
 
@@ -152,6 +172,8 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
     if(current_mode != "osc"):
         return
 
+    print(f"{address}: {osc_arguments}")
+
     # make sure the osc_arguments are in float format
     # store osc_arguments in float variables
     target_x = float(osc_arguments[0])
@@ -160,9 +182,9 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
 
     # consider offsets
 
-    target_x += x_offset
-    target_y += y_offset
-    target_z += z_offset
+    target_x += x_offset.get()
+    target_y += y_offset.get()
+    target_z += z_offset.get()
 
 
     # convert from mm to m
@@ -231,7 +253,7 @@ def switch_mode(mode):
         headers_label.configure(text="OSC", background="#a8d8b9", foreground="black", font=("Arial", 20))
 
         #start osc server
-
+        start_drawing()
 
 
        # idle_button.configure(background="#f07c7c", foreground="white", activebackground="#e86464", activeforeground="white")
