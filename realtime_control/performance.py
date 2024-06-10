@@ -30,7 +30,10 @@ class DummyRobot:
         pass
     def set_realtime_pose(self, args):
         pass
-
+    def get_actual_joint_positions(self):
+        pass
+    def movej(self, args):
+        pass
 
 moves = []
 json_data = {}
@@ -135,6 +138,16 @@ def replay_folder(robot, directory_path="performance"):
     #return moves
     
     replay_robot_positions(moves, robot)
+
+def move_to_home(robot):
+    print(robot.get_actual_joint_positions())
+    #joints = [-1.49995485e-03, -1.84361376e+00, -4.27633047e-01, -9.55459194e-01, 1.55824673e+00,  1.41437389e+01]
+    joints = [-1.85186068e-03, -8.55259435e-01, -1.33400774e+00, -1.02435590e+00,
+  1.60649371e+00,  1.41792606e+01]
+    print("homing to joint positions: ")
+    print(joints)
+    robot.movej(q=joints, t=5)
+    switch_mode("idle")
 
 def sum_timestamps_in_directory(directory_path="performance"):
     total_timestamps = 0
@@ -261,6 +274,9 @@ def switch_mode(robot, mode):
         #start osc server
         init_robot(robot)
 
+    elif mode == "home":
+        move_to_home(robot)
+
 
        # idle_button.configure(background="#f07c7c", foreground="white", activebackground="#e86464", activeforeground="white")
        # playback_button.configure(background="#fcd0a1", foreground="black", activebackground="#fbba7c", activeforeground="black")
@@ -354,6 +370,10 @@ async def init_main(robot):
     touchdesigner_button = ttk.Button(root, text="OSC", command=lambda: switch_mode(robot,"osc"))
     touchdesigner_button.pack(side=tk.TOP, pady=5, padx=2)
 
+    move_home_button = ttk.Button(root, text="Home", command=lambda: switch_mode(robot,"home"))
+    move_home_button.pack(side=tk.TOP, pady=5, padx=2)
+
+
     # Create input fields frame
     input_frame = ttk.Frame(root)
     input_frame.pack()
@@ -386,8 +406,8 @@ async def init_main(robot):
 
     # Set the button style
     style = ttk.Style()
-    style.configure("TButton", relief="flat", padding=5)
-    style.map("TButton", background=[("active", "#e86464"), ("pressed", "#e86464")], foreground=[("active", "white"), ("pressed", "white")])
+    style.configure("TButton", relief="flat", padding=0, borderwith=0)
+    style.map("TButton", background=[("active", "#e86464"), ("pressed", "#e86464")], foreground=[("active", "grey"), ("pressed", "white")])
 
     switch_mode(robot, "idle")
 
