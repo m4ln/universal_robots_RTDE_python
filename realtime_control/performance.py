@@ -39,7 +39,7 @@ moves = []
 json_data = {}
 
 debug = True
-run_without_connection = False
+run_without_connection = True
 
 headers_label = None
 status_label = None
@@ -123,6 +123,8 @@ def replay_robot_positions(robot_positions, robot):
         delay = timestamp # - (time.time() - start_time)
         if delay > 0:
             time.sleep(delay)
+
+    playback_active = False
 
 def replay_folder(robot, directory_path="performance"):
     global moves, playback_active
