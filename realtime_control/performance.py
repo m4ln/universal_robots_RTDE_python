@@ -44,6 +44,9 @@ run_without_connection = False
 headers_label = None
 status_label = None
 
+stop_flag = False
+playback_active = False
+
 if(run_without_connection):
     robot = DummyRobot()
 else: 
@@ -84,7 +87,7 @@ def replay_robot_positions(robot_positions, robot):
             timestamp and the corresponding joint positions.
     """
 
-    global x_offset, y_offset, z_offset
+    global x_offset, y_offset, z_offset, stop_flag, playback_active
 
     if not robot_positions:
         print("No robot positions to replay.")
@@ -92,8 +95,15 @@ def replay_robot_positions(robot_positions, robot):
 
     init_robot(robot)
     last_time = time.time() #robot_positions[0]['timestamp']
+    stop_flag = False
 
     for position_data in robot_positions:
+        if stop_flag:
+            print("ABORTING PLAYBACK")
+            playback_active = False
+            stop_flag = False
+            return
+        
         timestamp = position_data['timestamp']
         position = position_data['position']
 
@@ -115,7 +125,7 @@ def replay_robot_positions(robot_positions, robot):
             time.sleep(delay)
 
 def replay_folder(robot, directory_path="performance"):
-    global moves
+    global moves, playback_active
     moves = []
     print("replay the whole performance folder")
     init_robot(robot)
@@ -137,7 +147,12 @@ def replay_folder(robot, directory_path="performance"):
     
     #return moves
     
-    replay_robot_positions(moves, robot)
+    # Start the replay_robot_positions function in a separate thread
+    playback_active = True
+    replay_thread = threading.Thread(target=replay_robot_positions, args=(moves, robot))
+    replay_thread.start()
+
+   # replay_robot_positions(moves, robot)
 
 def move_to_home(robot):
     print(robot.get_actual_joint_positions())
@@ -244,8 +259,8 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
 
 
 def switch_mode(robot, mode):
-    global current_mode, headers_label, idle_button, playback_button, touchdesigner_button, headers_label, status_label
-    if mode == "idle":
+    global current_mode, headers_label, idle_button, playback_button, touchdesigner_button, headers_label, status_label, playback_active, stop_flag
+    if mode == "idle" and not playback_active:
         current_mode = "idle"
         root.configure(background="#f07c7c")
         
@@ -256,7 +271,7 @@ def switch_mode(robot, mode):
 
         set_freedrive(robot)
     
-    elif mode == "playback":
+    elif mode == "playback" and not playback_active:
         current_mode = "playback"
         root.configure(background="#fcd0a1")
         headers_label.configure(text="PLAYBACK", background="#fcd0a1", foreground="black", font=("Arial", 20))
@@ -266,7 +281,7 @@ def switch_mode(robot, mode):
        # idle_button.configure(background="#f07c7c", foreground="white", activebackground="#e86464", activeforeground="white")
        # playback_button.configure(background="#fcd0a1", foreground="black", activebackground="#fbba7c", activeforeground="black")
        # touchdesigner_button.configure(background="#a8d8b9", foreground="black", activebackground="#91c8a2", activeforeground="black")
-    elif mode == "osc":
+    elif mode == "osc" and not playback_active:
         current_mode = "osc"
         root.configure(background="#a8d8b9")
         headers_label.configure(text="OSC", background="#a8d8b9", foreground="black", font=("Arial", 20))
@@ -274,10 +289,14 @@ def switch_mode(robot, mode):
         #start osc server
         init_robot(robot)
 
-    elif mode == "home":
+    elif mode == "home" and current_mode == "idle":
         move_to_home(robot)
 
+    elif mode == "home" and current_mode != "idle":
+        print("PLEASE SET TO IDLE BEFORE HOMING")
 
+    elif mode == "stop":
+        stop_flag = True
        # idle_button.configure(background="#f07c7c", foreground="white", activebackground="#e86464", activeforeground="white")
        # playback_button.configure(background="#fcd0a1", foreground="black", activebackground="#fbba7c", activeforeground="black")
        # touchdesigner_button.configure(background="#a8d8b9", foreground="black", activebackground="#91c8a2", activeforeground="black")
@@ -322,7 +341,7 @@ root = tk.Tk()
 root.title("Robot Motion Planner")
 
 # Set the window size and make it fixed
-root.geometry("200x380")
+root.geometry("200x420")
 root.resizable(False, False)
 
 # Make the window always on top
@@ -373,6 +392,8 @@ async def init_main(robot):
     move_home_button = ttk.Button(root, text="Home", command=lambda: switch_mode(robot,"home"))
     move_home_button.pack(side=tk.TOP, pady=5, padx=2)
 
+    stop_button = ttk.Button(root, text="Stop", command=lambda: switch_mode(robot,"stop"))
+    stop_button.pack(side=tk.TOP, pady=5, padx=2)
 
     # Create input fields frame
     input_frame = ttk.Frame(root)
