@@ -21,24 +21,38 @@ import tkinter as tk
 from tkinter import ttk, filedialog
 from async_tkinter_loop import async_handler, async_mainloop
 
+class DummyRobot:
+    def reset_error(self):
+        pass
+    def init_realtime_control(self):
+        pass
+    def freedrive_mode(self):
+        pass
+    def set_realtime_pose(self, args):
+        pass
+
 
 moves = []
 json_data = {}
 
 debug = True
+run_without_connection = False
 
 headers_label = None
 status_label = None
 
-robotModel = URBasic.robotModel.RobotModel()
-robot = URBasic.urScriptExt.UrScriptExt(host=ROBOT_HOST, robotModel=robotModel)
+if(run_without_connection):
+    robot = DummyRobot()
+else: 
+    robotModel = URBasic.robotModel.RobotModel()
+    robot = URBasic.urScriptExt.UrScriptExt(host=ROBOT_HOST, robotModel=robotModel)
 
 # Define a variable to keep track of the current mode
 current_mode = "idle"
 
-#x_offset = tk.StringVar()
-#y_offset = tk.StringVar()
-#z_offset = tk.StringVar()
+x_offset = 0.0 #tk.StringVar()
+y_offset = 0.0 #tk.StringVar()
+z_offset = 0.0 #tk.StringVar()
 
 def init_robot(robot):
     #global robot
@@ -80,9 +94,9 @@ def replay_robot_positions(robot_positions, robot):
         timestamp = position_data['timestamp']
         position = position_data['position']
 
-        # position[0] += x_offset / 1000
-        # position[1] += y_offset / 1000
-        # position[2] += z_offset / 1000
+        position[0] += x_offset
+        position[1] += y_offset
+        position[2] += z_offset
 
         # position[0] /= 1000
         # position[1] /= 1000
@@ -172,16 +186,16 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
     target_y = float(osc_arguments[1])
     target_z = float(osc_arguments[2])
 
-    # consider offsets
-
-    #target_x += x_offset.get()
-    #target_y += y_offset.get()
-    #target_z += z_offset.get()
 
     # convert from mm to m
     target_x /= 1000
     target_y /= 1000
     target_z /= 1000
+    
+    # consider offsets, they are already in m
+    target_x += x_offset
+    target_y += y_offset
+    target_z += z_offset
 
     # check if target_x, target_y, target_z are in the range between min and max
     # if target_x < min_x or target_x > max_x:
@@ -221,8 +235,9 @@ def switch_mode(robot, mode):
     if mode == "idle":
         current_mode = "idle"
         root.configure(background="#f07c7c")
+        
         headers_label.configure(text="IDLE MODE", background="#f07c7c", foreground="black", font=("Arial", 20))
-       # idle_button.configure(background="#f07c7c", foreground="white", activebackground="#e86464", activeforeground="white")
+        #idle_button.configure(background="#f07c7c", foreground="white", activebackground="#e86464", activeforeground="white")
        # playback_button.configure(background="#fcd0a1", foreground="black", activebackground="#fbba7c", activeforeground="black")
        # touchdesigner_button.configure(background="#a8d8b9", foreground="black", activebackground="#91c8a2", activeforeground="black")
 
@@ -251,6 +266,35 @@ def switch_mode(robot, mode):
        # playback_button.configure(background="#fcd0a1", foreground="black", activebackground="#fbba7c", activeforeground="black")
        # touchdesigner_button.configure(background="#a8d8b9", foreground="black", activebackground="#91c8a2", activeforeground="black")
 
+def on_x_offset_change(event):
+    global x_offset
+    try:
+        x_offset = float(event.widget.get())
+        x_offset /= 1000
+        print(f"X-Offset value changed to: {x_offset}")
+    except ValueError:
+        print("Invalid value entered. X-Offset must be a float.")
+        x_offset = 0.0  
+
+def on_y_offset_change(event):
+    global y_offset
+    try:
+        y_offset = float(event.widget.get())
+        y_offset /= 1000
+        print(f"Y-Offset value changed to: {y_offset}")
+    except ValueError:
+        print("Invalid value entered. Y-Offset must be a float.")
+        y_offset = 0.0  
+
+def on_z_offset_change(event):
+    global z_offset
+    try:
+        z_offset = float(event.widget.get())
+        z_offset /= 1000
+        print(f"Z-Offset value changed to: {z_offset}")
+    except ValueError:
+        print("Invalid value entered. Z-Offset must be a float.")
+        z_offset = 0.0  
 
 total_duration = sum_timestamps_in_directory()
 print(total_duration)
@@ -314,25 +358,31 @@ async def init_main(robot):
     input_frame = ttk.Frame(root)
     input_frame.pack()
 
-    x_offset = tk.DoubleVar()
-    y_offset = tk.DoubleVar()
-    z_offset = tk.DoubleVar()
+    x_off = tk.DoubleVar()
+    y_off = tk.DoubleVar()
+    z_off = tk.DoubleVar()
 
     # Create input fields
     x_label = ttk.Label(input_frame, text="X-Offset:", background=root.cget("background"), foreground="white")
     x_label.pack(side=tk.TOP, padx=(10, 5))
-    x_entry = ttk.Entry(input_frame, textvariable=x_offset, width=3)
+    x_entry = ttk.Entry(input_frame, textvariable=x_off, width=3)
     x_entry.pack(padx=5)
+    x_entry.bind("<FocusOut>", on_x_offset_change)
+
 
     y_label = ttk.Label(input_frame, text="Y-Offset:", background=root.cget("background"), foreground="white")
     y_label.pack(side=tk.TOP, padx=5)
-    y_entry = ttk.Entry(input_frame, textvariable=y_offset, width=3)
+    y_entry = ttk.Entry(input_frame, textvariable=y_off, width=3)
     y_entry.pack(side=tk.TOP, padx=5)
+    y_entry.bind("<FocusOut>", on_y_offset_change)
+
 
     z_label = ttk.Label(input_frame, text="Z-Offset:", background=root.cget("background"), foreground="white")
     z_label.pack(side=tk.TOP, padx=5)
-    z_entry = ttk.Entry(input_frame, textvariable=z_offset, width=3)
+    z_entry = ttk.Entry(input_frame, textvariable=z_off, width=3)
     z_entry.pack(side=tk.TOP, padx=(5, 10))
+    z_entry.bind("<FocusOut>", on_z_offset_change)
+
 
     # Set the button style
     style = ttk.Style()
