@@ -156,8 +156,9 @@ def move_cartesian(address: str, *osc_arguments: List[Any]) -> None:
 
 """LOOP _____________________________________________________________________"""
 
-# remove the folder 'ur_log' and its content
-remove_folder(log_folder)
+if debug:
+    # remove the folder 'ur_log' and its content
+    remove_folder(log_folder)
 
 # initialise robot with URBasic
 print("initialising robot")
