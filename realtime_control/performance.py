@@ -39,7 +39,7 @@ moves = []
 json_data = {}
 
 debug = True
-run_without_connection = True
+run_without_connection = False
 
 headers_label = None
 status_label = None
@@ -271,8 +271,9 @@ def switch_mode(robot, mode):
        # playback_button.configure(background="#fcd0a1", foreground="black", activebackground="#fbba7c", activeforeground="black")
        # touchdesigner_button.configure(background="#a8d8b9", foreground="black", activebackground="#91c8a2", activeforeground="black")
 
-        set_freedrive(robot)
-    
+        #set_freedrive(robot)
+        init_robot(robot)
+
     elif mode == "playback" and not playback_active:
         current_mode = "playback"
         root.configure(background="#fcd0a1")
