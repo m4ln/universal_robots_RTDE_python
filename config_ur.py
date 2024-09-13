@@ -1,14 +1,11 @@
 ''' This file is for the configuration of the robot and the control loop.'''
 
 ################################################################################
-# Shouldn't be changed
+# CHANGE THESE VALUES TO MATCH YOUR ROBOT
 
 # Define the robot's host IP and port
-ROBOT_HOST = "169.254.91.163"
+ROBOT_HOST = "169.254.15.222"
 ROBOT_PORT = 30004
-
-# small value for small deviation
-EPSILON = 0.001
 
 ################################################################################
 # Robot real-time control
