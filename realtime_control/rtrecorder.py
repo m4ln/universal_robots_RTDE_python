@@ -3,12 +3,10 @@ sys.path.append("..")
 import threading
 import time
 import URBasic
-import math
 import json
 import os
 
-from config_ur import ROBOT_HOST, ACCELERATION, VELOCITY, ROBOT_START_POS
-from config_osc import OSC_HOST, OSC_PORT
+from config_ur import ROBOT_HOST
 
 import tkinter as tk
 from tkinter import ttk, filedialog
