@@ -20,8 +20,8 @@ json_data = {}
 recording_flag = False
 recording_thread = None
 
-#robotModel = URBasic.robotModel.RobotModel()
-#robot = URBasic.urScriptExt.UrScriptExt(host=ROBOT_HOST, robotModel=robotModel)
+robotModel = URBasic.robotModel.RobotModel()
+robot = URBasic.urScriptExt.UrScriptExt(host=ROBOT_HOST, robotModel=robotModel)
 
 def create_new_file():
     global json_data, json_filename
