@@ -4,3 +4,5 @@ numpy~=1.26.4
 six~=1.16.0
 matplotlib~=3.8.3
 setuptools~=68.2.0
+pynput~=1.7.6
+async-tkinter-loop==0.9.3
